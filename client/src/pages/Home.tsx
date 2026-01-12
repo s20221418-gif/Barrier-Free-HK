@@ -15,9 +15,44 @@ import {
   Menu,
   X,
   Mic,
-  MicOff
+  MicOff,
+  Clock,
+  Hospital,
+  Building2,
+  Train
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Route history interface
+interface RouteHistory {
+  from: string;
+  to: string;
+  timestamp: number;
+}
+
+// Quick location shortcuts
+const QUICK_LOCATIONS = [
+  { name: "Queen Mary Hospital", address: "102 Pok Fu Lam Road", icon: Hospital, lat: 22.2701, lng: 114.1316 },
+  { name: "Central Government Offices", address: "2 Tim Mei Avenue", icon: Building2, lat: 22.2819, lng: 114.1652 },
+  { name: "Hong Kong Station", address: "Central, Hong Kong", icon: Train, lat: 22.2848, lng: 114.1586 },
+  { name: "Kowloon Station", address: "Kowloon, Hong Kong", icon: Train, lat: 22.3048, lng: 114.1615 },
+  { name: "Tuen Mun Hospital", address: "23 Tsing Chung Koon Road", icon: Hospital, lat: 22.4106, lng: 113.9769 },
+  { name: "Admiralty Station", address: "Admiralty, Hong Kong", icon: Train, lat: 22.2795, lng: 114.1652 },
+];
+
+// AccessGuide.hk locations (sample data)
+const ACCESSIBLE_LOCATIONS = [
+  { name: "Golden Bauhinia Square", lat: 22.2793, lng: 114.1738, category: "attraction" },
+  { name: "Star Ferry Pier (Central)", lat: 22.2871, lng: 114.1574, category: "attraction" },
+  { name: "Stanley Market", lat: 22.2184, lng: 114.2132, category: "shopping" },
+  { name: "Temple Street Night Market", lat: 22.3089, lng: 114.1717, category: "shopping" },
+  { name: "Ladies Market", lat: 22.3193, lng: 114.1714, category: "shopping" },
+  { name: "Hong Kong Museum of History", lat: 22.3013, lng: 114.1739, category: "museum" },
+  { name: "Hong Kong Space Museum", lat: 22.2944, lng: 114.1719, category: "museum" },
+  { name: "Victoria Park", lat: 22.2810, lng: 114.1922, category: "park" },
+  { name: "Kowloon Park", lat: 22.3022, lng: 114.1697, category: "park" },
+  { name: "Hong Kong Park", lat: 22.2773, lng: 114.1614, category: "park" },
+];
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -28,6 +63,8 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
+  const [originMarker, setOriginMarker] = useState<google.maps.Marker | null>(null);
+  const [destinationMarker, setDestinationMarker] = useState<google.maps.Marker | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [travelMode, setTravelMode] = useState<"WALKING" | "TRANSIT">("TRANSIT");
@@ -35,11 +72,39 @@ export default function Home() {
   const [isListeningOrigin, setIsListeningOrigin] = useState(false);
   const [isListeningDestination, setIsListeningDestination] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
+  const [speechLang, setSpeechLang] = useState<"en-US" | "zh-HK">("en-US");
+  const [routeHistory, setRouteHistory] = useState<RouteHistory[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showQuickLocations, setShowQuickLocations] = useState(false);
 
   // Fetch accessibility data
   const { data: lifts } = trpc.accessibility.getLifts.useQuery();
   const { data: footbridges } = trpc.accessibility.getAccessibleFootbridges.useQuery();
   const { data: zebraCrossings } = trpc.accessibility.getZebraCrossingsWithOctopus.useQuery();
+
+  // Load route history from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("routeHistory");
+    if (saved) {
+      try {
+        setRouteHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load route history", e);
+      }
+    }
+  }, []);
+
+  // Save route history to localStorage
+  const saveRouteHistory = (from: string, to: string) => {
+    const newHistory: RouteHistory = {
+      from,
+      to,
+      timestamp: Date.now(),
+    };
+    const updated = [newHistory, ...routeHistory].slice(0, 10); // Keep last 10
+    setRouteHistory(updated);
+    localStorage.setItem("routeHistory", JSON.stringify(updated));
+  };
 
   // Initialize speech recognition
   useEffect(() => {
@@ -48,10 +113,10 @@ export default function Home() {
       const recognitionInstance = new SpeechRecognition();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
-      recognitionInstance.lang = 'en-US'; // Can be changed to 'zh-HK' for Cantonese
+      recognitionInstance.lang = speechLang;
       setRecognition(recognitionInstance);
     }
-  }, []);
+  }, [speechLang]);
 
   // Initialize map services
   const handleMapReady = useCallback((mapInstance: google.maps.Map) => {
@@ -59,7 +124,7 @@ export default function Home() {
     setDirectionsService(new google.maps.DirectionsService());
     const renderer = new google.maps.DirectionsRenderer({
       map: mapInstance,
-      suppressMarkers: false,
+      suppressMarkers: true, // We'll create custom draggable markers
       polylineOptions: {
         strokeColor: "#2563eb",
         strokeWeight: 6,
@@ -179,7 +244,95 @@ export default function Home() {
         });
       }
     });
+
+    // Add AccessGuide.hk accessible locations
+    ACCESSIBLE_LOCATIONS.forEach((location) => {
+      const marker = new google.maps.Marker({
+        position: { lat: location.lat, lng: location.lng },
+        map,
+        title: location.name,
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(36, 36),
+        },
+      });
+
+      // Make accessible locations clickable for route planning
+      marker.addListener("click", () => {
+        setDestination(location.name);
+        toast.success(`Destination set to: ${location.name}`);
+      });
+    });
   }, [map, lifts, footbridges, zebraCrossings]);
+
+  // Create draggable origin marker
+  const createOriginMarker = (position: google.maps.LatLng) => {
+    if (originMarker) {
+      originMarker.setMap(null);
+    }
+
+    const marker = new google.maps.Marker({
+      position,
+      map,
+      draggable: true,
+      title: "Origin (Drag to adjust)",
+      label: "A",
+      icon: {
+        url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+      },
+    });
+
+    marker.addListener("dragend", () => {
+      const newPos = marker.getPosition();
+      if (newPos && geocoder) {
+        geocoder.geocode({ location: newPos }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            setOrigin(results[0].formatted_address);
+            toast.info("Origin location adjusted");
+          }
+        });
+      }
+    });
+
+    setOriginMarker(marker);
+  };
+
+  // Create draggable destination marker
+  const createDestinationMarker = (position: google.maps.LatLng) => {
+    if (destinationMarker) {
+      destinationMarker.setMap(null);
+    }
+
+    const marker = new google.maps.Marker({
+      position,
+      map,
+      draggable: true,
+      title: "Destination (Drag to adjust)",
+      label: "B",
+      icon: {
+        url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+      },
+    });
+
+    marker.addListener("dragend", () => {
+      const newPos = marker.getPosition();
+      if (newPos && geocoder) {
+        geocoder.geocode({ location: newPos }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            setDestination(results[0].formatted_address);
+            toast.info("Destination location adjusted");
+          }
+        });
+      }
+    });
+
+    setDestinationMarker(marker);
+  };
 
   // Calculate accessible route
   const calculateRoute = async () => {
@@ -207,9 +360,15 @@ export default function Home() {
           directionsRenderer.setDirections(result);
           setCurrentRoute(result);
           
-          // Get route details
+          // Create draggable markers at origin and destination
           const route = result.routes[0];
           const leg = route.legs[0];
+          if (leg.start_location) {
+            createOriginMarker(leg.start_location);
+          }
+          if (leg.end_location) {
+            createDestinationMarker(leg.end_location);
+          }
           
           // Build transit info message
           let message = `Route found: ${leg.distance?.text}, ${leg.duration?.text}`;
@@ -221,6 +380,9 @@ export default function Home() {
           }
           
           toast.success(message);
+          
+          // Save to history
+          saveRouteHistory(origin, destination);
           
           // Speak route information if voice navigation is enabled
           if (user?.voiceNavigation) {
@@ -268,6 +430,14 @@ export default function Home() {
     if (directionsRenderer) {
       directionsRenderer.setDirections({ routes: [] } as any);
     }
+    if (originMarker) {
+      originMarker.setMap(null);
+      setOriginMarker(null);
+    }
+    if (destinationMarker) {
+      destinationMarker.setMap(null);
+      setDestinationMarker(null);
+    }
     setCurrentRoute(null);
     toast.info("Route cleared");
   };
@@ -280,7 +450,7 @@ export default function Home() {
     }
 
     setIsListeningOrigin(true);
-    recognition.lang = 'en-US';
+    recognition.lang = speechLang;
     
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
@@ -317,7 +487,7 @@ export default function Home() {
     }
 
     setIsListeningDestination(true);
-    recognition.lang = 'en-US';
+    recognition.lang = speechLang;
     
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
@@ -353,6 +523,28 @@ export default function Home() {
     }
     setIsListeningOrigin(false);
     setIsListeningDestination(false);
+  };
+
+  // Toggle speech language
+  const toggleLanguage = () => {
+    const newLang = speechLang === "en-US" ? "zh-HK" : "en-US";
+    setSpeechLang(newLang);
+    toast.info(`Language switched to ${newLang === "en-US" ? "English" : "中文"}`);
+  };
+
+  // Use quick location
+  const useQuickLocation = (location: typeof QUICK_LOCATIONS[0]) => {
+    setDestination(location.name);
+    toast.success(`Destination set to: ${location.name}`);
+    setShowQuickLocations(false);
+  };
+
+  // Use history item
+  const useHistoryItem = (item: RouteHistory) => {
+    setOrigin(item.from);
+    setDestination(item.to);
+    toast.success("Route loaded from history");
+    setShowHistory(false);
   };
 
   return (
@@ -414,7 +606,7 @@ export default function Home() {
       {/* Main content */}
       <main id="main-content" className="flex-1 flex flex-col lg:flex-row">
         {/* Search panel */}
-        <div className="lg:w-96 bg-card border-r-2 border-border p-4 space-y-4 overflow-y-auto">
+        <div className="lg:w-96 bg-card border-r-2 border-border p-4 space-y-4 overflow-y-auto max-h-screen">
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="text-xl">Plan Your Route</CardTitle>
@@ -423,6 +615,18 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Language toggle */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={toggleLanguage}
+                  variant="outline"
+                  size="sm"
+                  className="text-sm"
+                >
+                  {speechLang === "en-US" ? "EN" : "中"}
+                </Button>
+              </div>
+
               <div className="space-y-2">
                 <label htmlFor="origin" className="text-base font-semibold">
                   From
@@ -497,6 +701,82 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Quick actions */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowHistory(!showHistory)}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <Clock className="w-4 h-4 mr-2" />
+                  History
+                </Button>
+                <Button
+                  onClick={() => setShowQuickLocations(!showQuickLocations)}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Quick Locations
+                </Button>
+              </div>
+
+              {/* Route history */}
+              {showHistory && routeHistory.length > 0 && (
+                <Card className="bg-muted">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Recent Routes</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {routeHistory.slice(0, 5).map((item, idx) => (
+                      <Button
+                        key={idx}
+                        onClick={() => useHistoryItem(item)}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-left h-auto py-2"
+                      >
+                        <div className="text-xs">
+                          <div className="font-semibold">{item.from}</div>
+                          <div className="text-muted-foreground">→ {item.to}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Quick locations */}
+              {showQuickLocations && (
+                <Card className="bg-muted">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Quick Destinations</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 gap-2">
+                    {QUICK_LOCATIONS.map((loc, idx) => {
+                      const Icon = loc.icon;
+                      return (
+                        <Button
+                          key={idx}
+                          onClick={() => useQuickLocation(loc)}
+                          variant="outline"
+                          size="lg"
+                          className="justify-start h-auto py-3"
+                        >
+                          <Icon className="w-5 h-5 mr-3 shrink-0" />
+                          <div className="text-left">
+                            <div className="font-semibold text-sm">{loc.name}</div>
+                            <div className="text-xs text-muted-foreground">{loc.address}</div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Travel mode selection */}
               <div className="space-y-2">
                 <label className="text-base font-semibold">
@@ -564,6 +844,10 @@ export default function Home() {
                   </Button>
                 )}
               </div>
+
+              <div className="text-xs text-muted-foreground">
+                💡 Tip: Drag the markers on the map to fine-tune your route
+              </div>
             </CardContent>
           </Card>
 
@@ -590,6 +874,12 @@ export default function Home() {
                   ⏱
                 </div>
                 <span className="text-base">Extended Crossing Time</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
+                  📍
+                </div>
+                <span className="text-base">Accessible Locations</span>
               </div>
             </CardContent>
           </Card>

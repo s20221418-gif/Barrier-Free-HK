@@ -79,3 +79,17 @@
 - [x] Handle speech recognition errors gracefully
 - [x] Support both English and Cantonese speech input
 - [x] Provide audio confirmation of recognized text
+
+## New Enhancement Requests
+- [x] Implement draggable markers for origin and destination on map
+- [x] Allow users to fine-tune locations by dragging map icons
+- [x] Save route history (from/to locations) in localStorage
+- [x] Display recent route history for quick selection
+- [x] Add language toggle button (EN/中) next to microphone buttons
+- [x] Switch speech recognition language based on toggle
+- [x] Create quick location shortcuts panel
+- [x] Add buttons for hospitals, government offices, major MTR stations
+- [x] Research and extract data from AccessGuide.hk
+- [x] Integrate AccessGuide.hk accessible locations on map
+- [x] Display AccessGuide.hk location icons with proper categories
+- [x] Make AccessGuide.hk locations clickable for route planning
