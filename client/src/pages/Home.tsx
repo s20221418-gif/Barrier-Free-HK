@@ -28,7 +28,16 @@ import {
   Camera,
   Star,
   MessageSquare,
-  Play
+  Play,
+  Heart,
+  Sparkles,
+  ShoppingBag,
+  UtensilsCrossed,
+  Landmark,
+  TreePine,
+  Palette,
+  PartyPopper,
+  MapPinned
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,7 +45,7 @@ import { toast } from "sonner";
 const translations = {
   "en-US": {
     skipToMain: "Skip to main content",
-    appTitle: "HK Accessible Map",
+    appTitle: "Barrier Free HK",
     toggleMenu: "Toggle menu",
     savedLocations: "Saved Locations",
     routeHistory: "Route History",
@@ -99,7 +108,7 @@ const translations = {
   },
   "zh-HK": {
     skipToMain: "跳至主要內容",
-    appTitle: "香港無障礙地圖",
+    appTitle: "無障礙香港",
     toggleMenu: "切換選單",
     savedLocations: "已儲存位置",
     routeHistory: "路線記錄",
@@ -227,6 +236,8 @@ export default function Home() {
   const [showQuickLocations, setShowQuickLocations] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(13);
   const accessibleMarkersRef = useRef<google.maps.Marker[]>([]);
+  const [showDestinationsMenu, setShowDestinationsMenu] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // Turn-by-turn navigation
   const [showNavigation, setShowNavigation] = useState(false);
@@ -259,6 +270,7 @@ export default function Home() {
   const { data: zebraCrossings } = trpc.accessibility.getZebraCrossingsWithOctopus.useQuery();
   const { data: liftStatuses } = trpc.liftStatus.getAllStatuses.useQuery();
   const { data: outOfServiceLifts } = trpc.liftStatus.getOutOfService.useQuery();
+  const { data: allDestinations } = trpc.destinations.getAll.useQuery();
   
   // Mutations
   const addNoteMutation = trpc.accessibilityNotes.add.useMutation();
@@ -956,20 +968,106 @@ export default function Home() {
       <header className="bg-primary text-primary-foreground shadow-lg">
         <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Accessibility className="w-10 h-10" />
+            <Sparkles className="w-10 h-10" />
             <h1 className="text-2xl font-bold">{t("appTitle")}</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => setShowMenu(!showMenu)}
-            className="text-primary-foreground hover:bg-primary-foreground/10"
-            aria-label={t("toggleMenu")}
-          >
-            {showMenu ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => setShowDestinationsMenu(!showDestinationsMenu)}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+              aria-label="Popular Destinations"
+            >
+              <MapPinned className="w-8 h-8" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+              aria-label={t("toggleMenu")}
+            >
+              {showMenu ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
+            </Button>
+          </div>
         </div>
       </header>
+
+      {/* Destinations Menu */}
+      {showDestinationsMenu && (
+        <div className="bg-card border-b-2 border-border p-4 max-h-[70vh] overflow-y-auto">
+          <div className="container space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <MapPinned className="w-6 h-6" />
+              {uiLang === "zh-HK" ? "熱門目的地" : "Popular Destinations"}
+            </h2>
+            
+            {/* Category buttons */}
+            <div className="flex flex-wrap gap-2">
+              {["Shopping", "Dining", "Medical", "Government", "Transport", "Parks", "Culture", "Entertainment"].map(cat => {
+                const icons = {
+                  Shopping: ShoppingBag,
+                  Dining: UtensilsCrossed,
+                  Medical: Hospital,
+                  Government: Landmark,
+                  Transport: Train,
+                  Parks: TreePine,
+                  Culture: Palette,
+                  Entertainment: PartyPopper,
+                };
+                const Icon = icons[cat as keyof typeof icons];
+                return (
+                  <Button
+                    key={cat}
+                    variant={selectedCategory === cat ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                    className="flex items-center gap-2"
+                  >
+                    <Icon className="w-4 h-4" />
+                    {cat}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Destinations list */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {allDestinations
+                ?.filter(d => !selectedCategory || d.category === selectedCategory)
+                .map(dest => (
+                  <Button
+                    key={dest.id}
+                    variant="outline"
+                    size="lg"
+                    className="w-full justify-start text-left h-auto py-3"
+                    onClick={() => {
+                      setDestination(uiLang === "zh-HK" ? dest.nameZh : dest.name);
+                      toast.success(`${t("to")}: ${uiLang === "zh-HK" ? dest.nameZh : dest.name}`);
+                      setShowDestinationsMenu(false);
+                    }}
+                  >
+                    <div className="flex flex-col items-start gap-1 w-full">
+                      <div className="flex items-center gap-2 w-full">
+                        <MapPin className="w-5 h-5 text-primary" />
+                        <span className="font-semibold">{uiLang === "zh-HK" ? dest.nameZh : dest.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground ml-7">
+                        <span className="text-xs px-2 py-0.5 bg-primary/10 rounded">{dest.category}</span>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Number(dest.accessibilityRating) }).map((_, i) => (
+                            <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {showMenu && (
@@ -981,7 +1079,7 @@ export default function Home() {
               className="w-full justify-start text-lg"
               onClick={() => window.location.href = '/saved-locations'}
             >
-              <MapPin className="w-6 h-6 mr-3" />
+              <Heart className="w-6 h-6 mr-3 text-pink-500" />
               {t("savedLocations")}
             </Button>
             <Button variant="outline" size="lg" className="w-full justify-start text-lg">

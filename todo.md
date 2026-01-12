@@ -120,3 +120,13 @@
 - [x] Implement full interface language switching (English/Chinese)
 - [x] Translate all UI text, labels, buttons to Chinese
 - [x] Switch map labels and directions to Chinese when language is changed
+
+## Rebranding - Barrier Free HK
+- [x] Change app name from "HK Accessible Map" to "Barrier Free HK"
+- [x] Update all branding text in header, title, and meta tags
+- [x] Replace all icons with cuter, more friendly icons (lucide-react)
+- [x] Implement feminine color tone for favorite/saved location icons (pink, purple, pastel)
+- [x] Create 50+ popular destinations database
+- [x] Organize destinations by categories (Shopping, Dining, Medical, Government, Transport, Parks, Culture, Entertainment)
+- [x] Build top right menu with categorized destination list
+- [x] Make destinations clickable to set as route destination

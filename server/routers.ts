@@ -235,6 +235,22 @@ export const appRouter = router({
     }),
   }),
 
+  destinations: router({
+    // Get all destinations
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllPopularDestinations();
+    }),
+
+    // Get destinations by category
+    getByCategory: publicProcedure
+      .input(z.object({
+        category: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getPopularDestinationsByCategory(input.category);
+      }),
+  }),
+
   routeHistory: router({
     // Get user's route history
     list: protectedProcedure

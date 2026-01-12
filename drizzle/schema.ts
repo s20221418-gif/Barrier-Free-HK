@@ -263,3 +263,24 @@ export const notePhotos = mysqlTable("notePhotos", {
 
 export type NotePhoto = typeof notePhotos.$inferSelect;
 export type InsertNotePhoto = typeof notePhotos.$inferInsert;
+
+/**
+ * Popular destinations for quick access
+ */
+export const popularDestinations = mysqlTable("popularDestinations", {
+  id: int("id").autoincrement().primaryKey(),
+  name: text("name").notNull(),
+  nameZh: text("nameZh").notNull(), // Chinese name
+  category: varchar("category", { length: 50 }).notNull(), // Shopping, Dining, Medical, Government, Transport, Parks, Culture, Entertainment
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  accessibilityRating: int("accessibilityRating").notNull(), // 1-5 stars
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  categoryIdx: index("category_idx").on(table.category),
+  locationIdx: index("location_idx").on(table.latitude, table.longitude),
+}));
+
+export type PopularDestination = typeof popularDestinations.$inferSelect;
+export type InsertPopularDestination = typeof popularDestinations.$inferInsert;

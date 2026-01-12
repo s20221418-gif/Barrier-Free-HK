@@ -8,6 +8,7 @@ import {
   zebraCrossings, 
   pedestrianNodes, 
   pedestrianLinks,
+  popularDestinations,
   savedLocations,
   routeHistory,
   liftStatus,
@@ -413,4 +414,19 @@ export async function getUserNotes(userId: number): Promise<AccessibilityNote[]>
   return await db.select().from(accessibilityNotes)
     .where(eq(accessibilityNotes.userId, userId))
     .orderBy(sql`${accessibilityNotes.createdAt} DESC`);
+}
+
+// Popular Destinations
+export async function getAllPopularDestinations() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(popularDestinations);
+}
+
+export async function getPopularDestinationsByCategory(category: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(popularDestinations).where(eq(popularDestinations.category, category));
 }
