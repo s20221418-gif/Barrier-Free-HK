@@ -416,13 +416,13 @@ export default function Home() {
           title: lift.location + (isOutOfService ? " (OUT OF SERVICE)" : ""),
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${isOutOfService ? '#ef4444' : '#10b981'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 9l7-7 7 7"/>
-                <path d="M5 15l7 7 7-7"/>
-                ${isOutOfService ? '<circle cx="12" cy="12" r="8" fill="#ef4444" opacity="0.3"/>' : ''}
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="${isOutOfService ? '#ef4444' : '#ec4899'}" opacity="0.9"/>
+                <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
               </svg>
             `),
-            scaledSize: new google.maps.Size(36, 36),
+            scaledSize: new google.maps.Size(32, 32),
           },
         });
 
@@ -447,10 +447,11 @@ export default function Home() {
           title: bridge.name,
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="2"/>
-                <path d="M6 8v6"/>
-                <path d="M18 8v6"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="#a855f7" opacity="0.9"/>
+                <rect x="8" y="14" width="16" height="4" fill="white" rx="1"/>
+                <rect x="10" y="10" width="2" height="8" fill="white" rx="1"/>
+                <rect x="20" y="10" width="2" height="8" fill="white" rx="1"/>
               </svg>
             `),
             scaledSize: new google.maps.Size(32, 32),
@@ -471,9 +472,11 @@ export default function Home() {
           title: crossing.name + " (Octopus Extension)",
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="#f43f5e" opacity="0.9"/>
+                <rect x="10" y="12" width="12" height="2" fill="white"/>
+                <rect x="10" y="16" width="12" height="2" fill="white"/>
+                <circle cx="16" cy="16" r="2" fill="#fbbf24"/>
               </svg>
             `),
             scaledSize: new google.maps.Size(32, 32),
@@ -503,9 +506,9 @@ export default function Home() {
         title: uiLang === "zh-HK" ? location.nameCh : location.name,
         icon: {
           url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+              <path d="M18 2c-5.5 0-10 4.5-10 10 0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10z" fill="#9333ea" opacity="0.9"/>
+              <circle cx="18" cy="12" r="4" fill="white"/>
             </svg>
           `),
           scaledSize: new google.maps.Size(36, 36),
@@ -536,7 +539,14 @@ export default function Home() {
       title: "Origin (Drag to adjust)",
       label: "A",
       icon: {
-        url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+            <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#10b981" opacity="0.9"/>
+            <circle cx="20" cy="13" r="5" fill="white"/>
+            <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#10b981">A</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(40, 40),
       },
     });
 
@@ -568,7 +578,14 @@ export default function Home() {
       title: "Destination (Drag to adjust)",
       label: "B",
       icon: {
-        url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+            <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#f43f5e" opacity="0.9"/>
+            <circle cx="20" cy="13" r="5" fill="white"/>
+            <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#f43f5e">B</text>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(40, 40),
       },
     });
 

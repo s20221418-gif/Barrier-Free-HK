@@ -130,3 +130,12 @@
 - [x] Organize destinations by categories (Shopping, Dining, Medical, Government, Transport, Parks, Culture, Entertainment)
 - [x] Build top right menu with categorized destination list
 - [x] Make destinations clickable to set as route destination
+
+## Feminine Color Scheme Redesign
+- [x] Update primary color to pink/violet tones
+- [x] Update secondary colors with warm feminine palette
+- [x] Replace map marker icons with single-color flat designs
+- [x] Update lift, footbridge, and zebra crossing icons to flat style
+- [x] Apply pink/violet color scheme to buttons and UI elements
+- [x] Ensure warm, welcoming feel throughout the site
+- [x] Update map legend with new flat icon designs
