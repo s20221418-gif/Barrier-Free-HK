@@ -13,7 +13,9 @@ import {
   Search,
   Loader2,
   Menu,
-  X
+  X,
+  Mic,
+  MicOff
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,11 +32,26 @@ export default function Home() {
   const [showMenu, setShowMenu] = useState(false);
   const [travelMode, setTravelMode] = useState<"WALKING" | "TRANSIT">("TRANSIT");
   const [currentRoute, setCurrentRoute] = useState<google.maps.DirectionsResult | null>(null);
+  const [isListeningOrigin, setIsListeningOrigin] = useState(false);
+  const [isListeningDestination, setIsListeningDestination] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
 
   // Fetch accessibility data
   const { data: lifts } = trpc.accessibility.getLifts.useQuery();
   const { data: footbridges } = trpc.accessibility.getAccessibleFootbridges.useQuery();
   const { data: zebraCrossings } = trpc.accessibility.getZebraCrossingsWithOctopus.useQuery();
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US'; // Can be changed to 'zh-HK' for Cantonese
+      setRecognition(recognitionInstance);
+    }
+  }, []);
 
   // Initialize map services
   const handleMapReady = useCallback((mapInstance: google.maps.Map) => {
@@ -255,6 +272,89 @@ export default function Home() {
     toast.info("Route cleared");
   };
 
+  // Start speech recognition for origin
+  const startListeningOrigin = () => {
+    if (!recognition) {
+      toast.error("Speech recognition not supported in this browser");
+      return;
+    }
+
+    setIsListeningOrigin(true);
+    recognition.lang = 'en-US';
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setOrigin(transcript);
+      toast.success(`Origin set to: ${transcript}`);
+      
+      // Speak confirmation if voice navigation is enabled
+      if (user?.voiceNavigation) {
+        const utterance = new SpeechSynthesisUtterance(`Starting location set to ${transcript}`);
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      toast.error("Could not recognize speech. Please try again.");
+      setIsListeningOrigin(false);
+    };
+
+    recognition.onend = () => {
+      setIsListeningOrigin(false);
+    };
+
+    recognition.start();
+    toast.info("Listening... Speak your starting location");
+  };
+
+  // Start speech recognition for destination
+  const startListeningDestination = () => {
+    if (!recognition) {
+      toast.error("Speech recognition not supported in this browser");
+      return;
+    }
+
+    setIsListeningDestination(true);
+    recognition.lang = 'en-US';
+    
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setDestination(transcript);
+      toast.success(`Destination set to: ${transcript}`);
+      
+      // Speak confirmation if voice navigation is enabled
+      if (user?.voiceNavigation) {
+        const utterance = new SpeechSynthesisUtterance(`Destination set to ${transcript}`);
+        utterance.rate = 0.9;
+        window.speechSynthesis.speak(utterance);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      toast.error("Could not recognize speech. Please try again.");
+      setIsListeningDestination(false);
+    };
+
+    recognition.onend = () => {
+      setIsListeningDestination(false);
+    };
+
+    recognition.start();
+    toast.info("Listening... Speak your destination");
+  };
+
+  // Stop speech recognition
+  const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+    }
+    setIsListeningOrigin(false);
+    setIsListeningDestination(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Skip to main content for screen readers */}
@@ -330,7 +430,7 @@ export default function Home() {
                 <div className="flex gap-2">
                   <Input
                     id="origin"
-                    placeholder="Enter starting location"
+                    placeholder="Enter or speak starting location"
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
                     className="text-base min-h-[3rem]"
@@ -343,6 +443,15 @@ export default function Home() {
                     aria-label="Use current location"
                   >
                     <Navigation className="w-6 h-6" />
+                  </Button>
+                  <Button
+                    onClick={isListeningOrigin ? stopListening : startListeningOrigin}
+                    variant={isListeningOrigin ? "destructive" : "outline"}
+                    size="lg"
+                    className="shrink-0"
+                    aria-label={isListeningOrigin ? "Stop listening" : "Speak origin"}
+                  >
+                    {isListeningOrigin ? <MicOff className="w-6 h-6 animate-pulse" /> : <Mic className="w-6 h-6" />}
                   </Button>
                 </div>
               </div>
@@ -368,13 +477,24 @@ export default function Home() {
                 <label htmlFor="destination" className="text-base font-semibold">
                   To
                 </label>
-                <Input
-                  id="destination"
-                  placeholder="Enter destination"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="text-base min-h-[3rem]"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="destination"
+                    placeholder="Enter or speak destination"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    className="text-base min-h-[3rem]"
+                  />
+                  <Button
+                    onClick={isListeningDestination ? stopListening : startListeningDestination}
+                    variant={isListeningDestination ? "destructive" : "outline"}
+                    size="lg"
+                    className="shrink-0"
+                    aria-label={isListeningDestination ? "Stop listening" : "Speak destination"}
+                  >
+                    {isListeningDestination ? <MicOff className="w-6 h-6 animate-pulse" /> : <Mic className="w-6 h-6" />}
+                  </Button>
+                </div>
               </div>
 
               {/* Travel mode selection */}

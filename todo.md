@@ -70,3 +70,12 @@
 - [x] Add swap button to quickly reverse origin and destination
 - [x] Show combined walking + transit directions
 - [x] Display accessibility information for transit stops
+
+## Speech Recognition Features
+- [x] Add microphone button for origin input field
+- [x] Add microphone button for destination input field
+- [x] Implement Web Speech API for voice recognition
+- [x] Show visual feedback during speech recording
+- [x] Handle speech recognition errors gracefully
+- [x] Support both English and Cantonese speech input
+- [x] Provide audio confirmation of recognized text
