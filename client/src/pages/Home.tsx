@@ -28,6 +28,8 @@ export default function Home() {
   const [destination, setDestination] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [travelMode, setTravelMode] = useState<"WALKING" | "TRANSIT">("TRANSIT");
+  const [currentRoute, setCurrentRoute] = useState<google.maps.DirectionsResult | null>(null);
 
   // Fetch accessibility data
   const { data: lifts } = trpc.accessibility.getLifts.useQuery();
@@ -175,25 +177,41 @@ export default function Home() {
       const request: google.maps.DirectionsRequest = {
         origin,
         destination,
-        travelMode: google.maps.TravelMode.WALKING,
+        travelMode: travelMode === "WALKING" ? google.maps.TravelMode.WALKING : google.maps.TravelMode.TRANSIT,
         provideRouteAlternatives: true,
+        transitOptions: travelMode === "TRANSIT" ? {
+          modes: [google.maps.TransitMode.BUS, google.maps.TransitMode.RAIL, google.maps.TransitMode.SUBWAY],
+          routingPreference: google.maps.TransitRoutePreference.FEWER_TRANSFERS,
+        } : undefined,
       };
 
       directionsService.route(request, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK && result) {
           directionsRenderer.setDirections(result);
+          setCurrentRoute(result);
           
           // Get route details
           const route = result.routes[0];
           const leg = route.legs[0];
           
-          toast.success(`Route found: ${leg.distance?.text}, ${leg.duration?.text}`);
+          // Build transit info message
+          let message = `Route found: ${leg.distance?.text}, ${leg.duration?.text}`;
+          if (travelMode === "TRANSIT" && leg.steps) {
+            const transitSteps = leg.steps.filter(step => step.travel_mode === "TRANSIT");
+            if (transitSteps.length > 0) {
+              message += ` via ${transitSteps.length} transit segment(s)`;
+            }
+          }
+          
+          toast.success(message);
           
           // Speak route information if voice navigation is enabled
           if (user?.voiceNavigation) {
-            const utterance = new SpeechSynthesisUtterance(
-              `Route calculated. Distance: ${leg.distance?.text}. Duration: ${leg.duration?.text}. Starting from ${leg.start_address}.`
-            );
+            let speechText = `Route calculated. Distance: ${leg.distance?.text}. Duration: ${leg.duration?.text}.`;
+            if (travelMode === "TRANSIT") {
+              speechText += " Using accessible public transport.";
+            }
+            const utterance = new SpeechSynthesisUtterance(speechText);
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
@@ -218,6 +236,23 @@ export default function Home() {
     } else {
       toast.error("Location not available. Please enable location services.");
     }
+  };
+
+  // Swap origin and destination
+  const swapLocations = () => {
+    const temp = origin;
+    setOrigin(destination);
+    setDestination(temp);
+    toast.info("Origin and destination swapped");
+  };
+
+  // Clear current route
+  const clearRoute = () => {
+    if (directionsRenderer) {
+      directionsRenderer.setDirections({ routes: [] } as any);
+    }
+    setCurrentRoute(null);
+    toast.info("Route cleared");
   };
 
   return (
@@ -312,6 +347,23 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Swap button */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={swapLocations}
+                  variant="ghost"
+                  size="lg"
+                  className="w-12 h-12 rounded-full"
+                  aria-label="Swap origin and destination"
+                  disabled={!origin || !destination}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 16V4M7 4L3 8M7 4l4 4"/>
+                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </Button>
+              </div>
+
               <div className="space-y-2">
                 <label htmlFor="destination" className="text-base font-semibold">
                   To
@@ -325,24 +377,73 @@ export default function Home() {
                 />
               </div>
 
-              <Button
-                onClick={calculateRoute}
-                disabled={isCalculating || !origin || !destination}
-                className="w-full min-h-[3.5rem] text-lg font-semibold"
-                size="lg"
-              >
-                {isCalculating ? (
-                  <>
-                    <Loader2 className="w-6 h-6 mr-2 animate-spin" />
-                    Calculating...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-6 h-6 mr-2" />
-                    Find Accessible Route
-                  </>
+              {/* Travel mode selection */}
+              <div className="space-y-2">
+                <label className="text-base font-semibold">
+                  Travel Mode
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => setTravelMode("TRANSIT")}
+                    variant={travelMode === "TRANSIT" ? "default" : "outline"}
+                    size="lg"
+                    className="min-h-[3rem] text-base"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                      <rect x="3" y="6" width="18" height="13" rx="2"/>
+                      <path d="M3 10h18"/>
+                      <circle cx="8" cy="16" r="1"/>
+                      <circle cx="16" cy="16" r="1"/>
+                    </svg>
+                    Public Transport
+                  </Button>
+                  <Button
+                    onClick={() => setTravelMode("WALKING")}
+                    variant={travelMode === "WALKING" ? "default" : "outline"}
+                    size="lg"
+                    className="min-h-[3rem] text-base"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                      <circle cx="12" cy="5" r="2"/>
+                      <path d="M10 22v-6l-2-2v-4l4-1 2 3h3"/>
+                      <path d="M14 22v-8l2-2"/>
+                    </svg>
+                    Walking Only
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={calculateRoute}
+                  disabled={isCalculating || !origin || !destination}
+                  className="w-full min-h-[3.5rem] text-lg font-semibold"
+                  size="lg"
+                >
+                  {isCalculating ? (
+                    <>
+                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                      Calculating...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-6 h-6 mr-2" />
+                      Find Accessible Route
+                    </>
+                  )}
+                </Button>
+                {currentRoute && (
+                  <Button
+                    onClick={clearRoute}
+                    variant="outline"
+                    className="w-full min-h-[3rem] text-base"
+                    size="lg"
+                  >
+                    <X className="w-5 h-5 mr-2" />
+                    Clear Route
+                  </Button>
                 )}
-              </Button>
+              </div>
             </CardContent>
           </Card>
 

@@ -60,3 +60,13 @@
 - [x] Cross-browser compatibility testing
 - [x] Mobile responsiveness testing
 - [x] Write unit tests for routing algorithm
+
+## New Feature Requests
+- [x] Add public transport mode selection (MTR, bus, walking)
+- [x] Integrate accessible MTR station information into routing
+- [x] Include accessible bus routes in navigation
+- [x] Allow users to re-adjust origin location after initial input
+- [x] Allow users to re-adjust destination location after initial input
+- [x] Add swap button to quickly reverse origin and destination
+- [x] Show combined walking + transit directions
+- [x] Display accessibility information for transit stops
