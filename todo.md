@@ -114,3 +114,9 @@
 - [x] Add rating system for accessibility conditions
 - [x] Implement note moderation for authenticated users
 - [x] Show photo gallery for each location
+
+## UX Improvements
+- [x] Show popular places/AccessGuide locations only when zoomed in 3x
+- [x] Implement full interface language switching (English/Chinese)
+- [x] Translate all UI text, labels, buttons to Chinese
+- [x] Switch map labels and directions to Chinese when language is changed

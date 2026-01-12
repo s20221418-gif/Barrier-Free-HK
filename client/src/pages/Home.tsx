@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,136 @@ import {
   Play
 } from "lucide-react";
 import { toast } from "sonner";
-// Storage will be handled via tRPC procedures
+
+// Translations
+const translations = {
+  "en-US": {
+    skipToMain: "Skip to main content",
+    appTitle: "HK Accessible Map",
+    toggleMenu: "Toggle menu",
+    savedLocations: "Saved Locations",
+    routeHistory: "Route History",
+    settings: "Settings",
+    planRoute: "Plan Your Route",
+    findRoutes: "Find barrier-free accessible routes in Hong Kong",
+    from: "From",
+    to: "To",
+    enterOrigin: "Enter or speak starting location",
+    enterDestination: "Enter or speak destination",
+    useCurrentLocation: "Use current location",
+    speakOrigin: "Speak origin",
+    speakDestination: "Speak destination",
+    stopListening: "Stop listening",
+    swapLocations: "Swap origin and destination",
+    history: "History",
+    quickLocations: "Quick Locations",
+    recentRoutes: "Recent Routes",
+    quickDestinations: "Quick Destinations",
+    travelMode: "Travel Mode",
+    publicTransport: "Public Transport",
+    walkingOnly: "Walking Only",
+    findAccessibleRoute: "Find Accessible Route",
+    calculating: "Calculating...",
+    clearRoute: "Clear Route",
+    tip: "💡 Tip: Drag the markers on the map to fine-tune your route. Click anywhere on the map to add accessibility notes.",
+    turnByTurnNav: "Turn-by-Turn Navigation",
+    stepOf: "Step {current} of {total}",
+    speakStep: "Speak Step",
+    nextStep: "Next Step",
+    mapLegend: "Map Legend",
+    accessibleLifts: "Accessible Lifts",
+    outOfServiceLifts: "Out of Service Lifts",
+    accessibleFootbridges: "Accessible Footbridges",
+    extendedCrossingTime: "Extended Crossing Time",
+    accessibleLocations: "Accessible Locations",
+    addNote: "Add Accessibility Note",
+    shareExperience: "Share your experience to help the community",
+    location: "Location",
+    rating: "Rating",
+    condition: "Condition",
+    comment: "Comment",
+    describeConditions: "Describe the accessibility conditions...",
+    photos: "Photos (optional, max 3)",
+    photosSelected: "{count} photo(s) selected",
+    submitNote: "Submit Note",
+    submitting: "Submitting...",
+    cancel: "Cancel",
+    excellent: "Excellent",
+    good: "Good",
+    fair: "Fair",
+    poor: "Poor",
+    inaccessible: "Inaccessible",
+    queenMaryHospital: "Queen Mary Hospital",
+    centralGovOffices: "Central Government Offices",
+    hongKongStation: "Hong Kong Station",
+    kowloonStation: "Kowloon Station",
+    tuenMunHospital: "Tuen Mun Hospital",
+    admiraltyStation: "Admiralty Station",
+  },
+  "zh-HK": {
+    skipToMain: "跳至主要內容",
+    appTitle: "香港無障礙地圖",
+    toggleMenu: "切換選單",
+    savedLocations: "已儲存位置",
+    routeHistory: "路線記錄",
+    settings: "設定",
+    planRoute: "規劃您的路線",
+    findRoutes: "尋找香港無障礙通道路線",
+    from: "起點",
+    to: "終點",
+    enterOrigin: "輸入或說出起點位置",
+    enterDestination: "輸入或說出目的地",
+    useCurrentLocation: "使用目前位置",
+    speakOrigin: "說出起點",
+    speakDestination: "說出目的地",
+    stopListening: "停止聆聽",
+    swapLocations: "交換起點和終點",
+    history: "記錄",
+    quickLocations: "快速位置",
+    recentRoutes: "最近路線",
+    quickDestinations: "快速目的地",
+    travelMode: "交通方式",
+    publicTransport: "公共交通",
+    walkingOnly: "只限步行",
+    findAccessibleRoute: "尋找無障礙路線",
+    calculating: "計算中...",
+    clearRoute: "清除路線",
+    tip: "💡 提示：拖曳地圖上的標記以微調路線。點擊地圖任何位置以新增無障礙備註。",
+    turnByTurnNav: "逐步導航",
+    stepOf: "第 {current} 步，共 {total} 步",
+    speakStep: "朗讀步驟",
+    nextStep: "下一步",
+    mapLegend: "地圖圖例",
+    accessibleLifts: "無障礙升降機",
+    outOfServiceLifts: "暫停服務升降機",
+    accessibleFootbridges: "無障礙行人天橋",
+    extendedCrossingTime: "延長過路時間",
+    accessibleLocations: "無障礙地點",
+    addNote: "新增無障礙備註",
+    shareExperience: "分享您的經驗以幫助社區",
+    location: "位置",
+    rating: "評分",
+    condition: "狀況",
+    comment: "評論",
+    describeConditions: "描述無障礙狀況...",
+    photos: "相片（選填，最多3張）",
+    photosSelected: "已選擇 {count} 張相片",
+    submitNote: "提交備註",
+    submitting: "提交中...",
+    cancel: "取消",
+    excellent: "優秀",
+    good: "良好",
+    fair: "一般",
+    poor: "欠佳",
+    inaccessible: "不可通行",
+    queenMaryHospital: "瑪麗醫院",
+    centralGovOffices: "中環政府總部",
+    hongKongStation: "香港站",
+    kowloonStation: "九龍站",
+    tuenMunHospital: "屯門醫院",
+    admiraltyStation: "金鐘站",
+  }
+};
 
 // Route history interface
 interface RouteHistory {
@@ -51,26 +180,26 @@ interface NavigationStep {
 
 // Quick location shortcuts
 const QUICK_LOCATIONS = [
-  { name: "Queen Mary Hospital", address: "102 Pok Fu Lam Road", icon: Hospital, lat: 22.2701, lng: 114.1316 },
-  { name: "Central Government Offices", address: "2 Tim Mei Avenue", icon: Building2, lat: 22.2819, lng: 114.1652 },
-  { name: "Hong Kong Station", address: "Central, Hong Kong", icon: Train, lat: 22.2848, lng: 114.1586 },
-  { name: "Kowloon Station", address: "Kowloon, Hong Kong", icon: Train, lat: 22.3048, lng: 114.1615 },
-  { name: "Tuen Mun Hospital", address: "23 Tsing Chung Koon Road", icon: Hospital, lat: 22.4106, lng: 113.9769 },
-  { name: "Admiralty Station", address: "Admiralty, Hong Kong", icon: Train, lat: 22.2795, lng: 114.1652 },
+  { nameKey: "queenMaryHospital", address: "102 Pok Fu Lam Road", icon: Hospital, lat: 22.2701, lng: 114.1316 },
+  { nameKey: "centralGovOffices", address: "2 Tim Mei Avenue", icon: Building2, lat: 22.2819, lng: 114.1652 },
+  { nameKey: "hongKongStation", address: "Central, Hong Kong", icon: Train, lat: 22.2848, lng: 114.1586 },
+  { nameKey: "kowloonStation", address: "Kowloon, Hong Kong", icon: Train, lat: 22.3048, lng: 114.1615 },
+  { nameKey: "tuenMunHospital", address: "23 Tsing Chung Koon Road", icon: Hospital, lat: 22.4106, lng: 113.9769 },
+  { nameKey: "admiraltyStation", address: "Admiralty, Hong Kong", icon: Train, lat: 22.2795, lng: 114.1652 },
 ];
 
 // AccessGuide.hk locations (sample data)
 const ACCESSIBLE_LOCATIONS = [
-  { name: "Golden Bauhinia Square", lat: 22.2793, lng: 114.1738, category: "attraction" },
-  { name: "Star Ferry Pier (Central)", lat: 22.2871, lng: 114.1574, category: "attraction" },
-  { name: "Stanley Market", lat: 22.2184, lng: 114.2132, category: "shopping" },
-  { name: "Temple Street Night Market", lat: 22.3089, lng: 114.1717, category: "shopping" },
-  { name: "Ladies Market", lat: 22.3193, lng: 114.1714, category: "shopping" },
-  { name: "Hong Kong Museum of History", lat: 22.3013, lng: 114.1739, category: "museum" },
-  { name: "Hong Kong Space Museum", lat: 22.2944, lng: 114.1719, category: "museum" },
-  { name: "Victoria Park", lat: 22.2810, lng: 114.1922, category: "park" },
-  { name: "Kowloon Park", lat: 22.3022, lng: 114.1697, category: "park" },
-  { name: "Hong Kong Park", lat: 22.2773, lng: 114.1614, category: "park" },
+  { name: "Golden Bauhinia Square", nameCh: "金紫荊廣場", lat: 22.2793, lng: 114.1738, category: "attraction" },
+  { name: "Star Ferry Pier (Central)", nameCh: "天星碼頭（中環）", lat: 22.2871, lng: 114.1574, category: "attraction" },
+  { name: "Stanley Market", nameCh: "赤柱市集", lat: 22.2184, lng: 114.2132, category: "shopping" },
+  { name: "Temple Street Night Market", nameCh: "廟街夜市", lat: 22.3089, lng: 114.1717, category: "shopping" },
+  { name: "Ladies Market", nameCh: "女人街", lat: 22.3193, lng: 114.1714, category: "shopping" },
+  { name: "Hong Kong Museum of History", nameCh: "香港歷史博物館", lat: 22.3013, lng: 114.1739, category: "museum" },
+  { name: "Hong Kong Space Museum", nameCh: "香港太空館", lat: 22.2944, lng: 114.1719, category: "museum" },
+  { name: "Victoria Park", nameCh: "維多利亞公園", lat: 22.2810, lng: 114.1922, category: "park" },
+  { name: "Kowloon Park", nameCh: "九龍公園", lat: 22.3022, lng: 114.1697, category: "park" },
+  { name: "Hong Kong Park", nameCh: "香港公園", lat: 22.2773, lng: 114.1614, category: "park" },
 ];
 
 export default function Home() {
@@ -92,9 +221,12 @@ export default function Home() {
   const [isListeningDestination, setIsListeningDestination] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
   const [speechLang, setSpeechLang] = useState<"en-US" | "zh-HK">("en-US");
+  const [uiLang, setUiLang] = useState<"en-US" | "zh-HK">("en-US");
   const [routeHistory, setRouteHistory] = useState<RouteHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showQuickLocations, setShowQuickLocations] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(13);
+  const accessibleMarkersRef = useRef<google.maps.Marker[]>([]);
   
   // Turn-by-turn navigation
   const [showNavigation, setShowNavigation] = useState(false);
@@ -109,6 +241,17 @@ export default function Home() {
   const [noteComment, setNoteComment] = useState("");
   const [notePhotos, setNotePhotos] = useState<File[]>([]);
   const [isUploadingNote, setIsUploadingNote] = useState(false);
+
+  // Get translation
+  const t = (key: keyof typeof translations["en-US"], params?: Record<string, any>): string => {
+    let text = translations[uiLang][key] || translations["en-US"][key] || key;
+    if (params) {
+      Object.keys(params).forEach(param => {
+        text = text.replace(`{${param}}`, String(params[param]));
+      });
+    }
+    return text;
+  };
 
   // Fetch accessibility data
   const { data: lifts } = trpc.accessibility.getLifts.useQuery();
@@ -157,6 +300,13 @@ export default function Home() {
     }
   }, [speechLang]);
 
+  // Update recognition language when speech lang changes
+  useEffect(() => {
+    if (recognition) {
+      recognition.lang = speechLang;
+    }
+  }, [speechLang, recognition]);
+
   // Initialize map services
   const handleMapReady = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
@@ -173,6 +323,12 @@ export default function Home() {
     setDirectionsRenderer(renderer);
     setGeocoder(new google.maps.Geocoder());
 
+    // Listen to zoom changes
+    mapInstance.addListener("zoom_changed", () => {
+      const zoom = mapInstance.getZoom() || 13;
+      setCurrentZoom(zoom);
+    });
+
     // Get user's current location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -184,6 +340,7 @@ export default function Home() {
           setUserLocation(pos);
           mapInstance.setCenter(pos);
           mapInstance.setZoom(15);
+          setCurrentZoom(15);
 
           // Add marker for current location
           new google.maps.Marker({
@@ -205,6 +362,7 @@ export default function Home() {
           const defaultPos = { lat: 22.2817, lng: 114.1553 };
           mapInstance.setCenter(defaultPos);
           mapInstance.setZoom(13);
+          setCurrentZoom(13);
         }
       );
     }
@@ -311,13 +469,26 @@ export default function Home() {
         });
       }
     });
+  }, [map, lifts, footbridges, zebraCrossings, liftStatuses, outOfServiceLifts]);
 
-    // Add AccessGuide.hk accessible locations
+  // Add AccessGuide.hk accessible locations with zoom-based visibility
+  useEffect(() => {
+    if (!map) return;
+
+    // Clear existing markers
+    accessibleMarkersRef.current.forEach(marker => marker.setMap(null));
+    accessibleMarkersRef.current = [];
+
+    // Only show when zoomed in 3x (zoom >= 16, since default is 13)
+    const shouldShow = currentZoom >= 16;
+
+    if (!shouldShow) return;
+
     ACCESSIBLE_LOCATIONS.forEach((location) => {
       const marker = new google.maps.Marker({
         position: { lat: location.lat, lng: location.lng },
         map,
-        title: location.name,
+        title: uiLang === "zh-HK" ? location.nameCh : location.name,
         icon: {
           url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -331,11 +502,14 @@ export default function Home() {
 
       // Make accessible locations clickable for route planning
       marker.addListener("click", () => {
-        setDestination(location.name);
-        toast.success(`Destination set to: ${location.name}`);
+        const name = uiLang === "zh-HK" ? location.nameCh : location.name;
+        setDestination(name);
+        toast.success(`${t("to")}: ${name}`);
       });
+
+      accessibleMarkersRef.current.push(marker);
     });
-  }, [map, lifts, footbridges, zebraCrossings, liftStatuses, outOfServiceLifts]);
+  }, [map, currentZoom, uiLang]);
 
   // Create draggable origin marker
   const createOriginMarker = (position: google.maps.LatLng) => {
@@ -360,7 +534,7 @@ export default function Home() {
         geocoder.geocode({ location: newPos }, (results, status) => {
           if (status === "OK" && results && results[0]) {
             setOrigin(results[0].formatted_address);
-            toast.info("Origin location adjusted");
+            toast.info(t("from") + " " + results[0].formatted_address);
           }
         });
       }
@@ -392,7 +566,7 @@ export default function Home() {
         geocoder.geocode({ location: newPos }, (results, status) => {
           if (status === "OK" && results && results[0]) {
             setDestination(results[0].formatted_address);
-            toast.info("Destination location adjusted");
+            toast.info(t("to") + " " + results[0].formatted_address);
           }
         });
       }
@@ -436,7 +610,7 @@ export default function Home() {
   // Calculate accessible route
   const calculateRoute = async () => {
     if (!directionsService || !directionsRenderer || !origin || !destination) {
-      toast.error("Please enter both origin and destination");
+      toast.error(t("enterOrigin"));
       return;
     }
 
@@ -448,6 +622,7 @@ export default function Home() {
         destination,
         travelMode: travelMode === "WALKING" ? google.maps.TravelMode.WALKING : google.maps.TravelMode.TRANSIT,
         provideRouteAlternatives: true,
+        language: uiLang === "zh-HK" ? "zh-HK" : "en",
         transitOptions: travelMode === "TRANSIT" ? {
           modes: [google.maps.TransitMode.BUS, google.maps.TransitMode.RAIL, google.maps.TransitMode.SUBWAY],
           routingPreference: google.maps.TransitRoutePreference.FEWER_TRANSFERS,
@@ -476,11 +651,11 @@ export default function Home() {
           setShowNavigation(true);
           
           // Build transit info message
-          let message = `Route found: ${leg.distance?.text}, ${leg.duration?.text}`;
+          let message = `${leg.distance?.text}, ${leg.duration?.text}`;
           if (travelMode === "TRANSIT" && leg.steps) {
             const transitSteps = leg.steps.filter(step => step.travel_mode === "TRANSIT");
             if (transitSteps.length > 0) {
-              message += ` via ${transitSteps.length} transit segment(s)`;
+              message += ` (${transitSteps.length} ${t("publicTransport")})`;
             }
           }
           
@@ -491,23 +666,24 @@ export default function Home() {
           
           // Speak route information if voice navigation is enabled
           if (user?.voiceNavigation) {
-            let speechText = `Route calculated. Distance: ${leg.distance?.text}. Duration: ${leg.duration?.text}.`;
+            let speechText = `${leg.distance?.text}. ${leg.duration?.text}.`;
             if (travelMode === "TRANSIT") {
-              speechText += " Using accessible public transport.";
+              speechText += uiLang === "zh-HK" ? " 使用無障礙公共交通。" : " Using accessible public transport.";
             }
             const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.lang = uiLang;
             utterance.rate = 0.9;
             utterance.pitch = 1.0;
             window.speechSynthesis.speak(utterance);
           }
         } else {
-          toast.error("Could not calculate route. Please try different locations.");
+          toast.error(uiLang === "zh-HK" ? "無法計算路線。請嘗試不同位置。" : "Could not calculate route. Please try different locations.");
         }
         setIsCalculating(false);
       });
     } catch (error) {
       console.error("Error calculating route:", error);
-      toast.error("Error calculating route");
+      toast.error(uiLang === "zh-HK" ? "計算路線時出錯" : "Error calculating route");
       setIsCalculating(false);
     }
   };
@@ -518,14 +694,15 @@ export default function Home() {
     
     let text = step.instruction;
     if (step.facilityType === "lift") {
-      text += ". Use the accessible lift.";
+      text += uiLang === "zh-HK" ? "。使用無障礙升降機。" : ". Use the accessible lift.";
     } else if (step.facilityType === "ramp") {
-      text += ". Accessible ramp available.";
+      text += uiLang === "zh-HK" ? "。有無障礙斜道。" : ". Accessible ramp available.";
     } else if (step.facilityType === "stairs") {
-      text += ". Warning: stairs ahead. Look for alternative accessible route.";
+      text += uiLang === "zh-HK" ? "。警告：前方有樓梯。尋找其他無障礙路線。" : ". Warning: stairs ahead. Look for alternative accessible route.";
     }
     
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = uiLang;
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   };
@@ -537,9 +714,11 @@ export default function Home() {
       setCurrentStepIndex(newIndex);
       speakStep(navigationSteps[newIndex]);
     } else {
-      toast.success("You have arrived at your destination!");
+      const arrivalMsg = uiLang === "zh-HK" ? "您已到達目的地！" : "You have arrived at your destination!";
+      toast.success(arrivalMsg);
       if (user?.voiceNavigation) {
-        const utterance = new SpeechSynthesisUtterance("You have arrived at your destination.");
+        const utterance = new SpeechSynthesisUtterance(arrivalMsg);
+        utterance.lang = uiLang;
         window.speechSynthesis.speak(utterance);
       }
     }
@@ -549,9 +728,9 @@ export default function Home() {
   const useCurrentLocation = () => {
     if (userLocation) {
       setOrigin(`${userLocation.lat},${userLocation.lng}`);
-      toast.success("Current location set as origin");
+      toast.success(t("useCurrentLocation"));
     } else {
-      toast.error("Location not available. Please enable location services.");
+      toast.error(uiLang === "zh-HK" ? "位置不可用。請啟用位置服務。" : "Location not available. Please enable location services.");
     }
   };
 
@@ -560,7 +739,7 @@ export default function Home() {
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
-    toast.info("Origin and destination swapped");
+    toast.info(t("swapLocations"));
   };
 
   // Clear current route
@@ -580,13 +759,13 @@ export default function Home() {
     setShowNavigation(false);
     setNavigationSteps([]);
     setCurrentStepIndex(0);
-    toast.info("Route cleared");
+    toast.info(t("clearRoute"));
   };
 
   // Start speech recognition for origin
   const startListeningOrigin = () => {
     if (!recognition) {
-      toast.error("Speech recognition not supported in this browser");
+      toast.error(uiLang === "zh-HK" ? "此瀏覽器不支援語音識別" : "Speech recognition not supported in this browser");
       return;
     }
 
@@ -596,10 +775,12 @@ export default function Home() {
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setOrigin(transcript);
-      toast.success(`Origin set to: ${transcript}`);
+      toast.success(`${t("from")}: ${transcript}`);
       
       if (user?.voiceNavigation) {
-        const utterance = new SpeechSynthesisUtterance(`Starting location set to ${transcript}`);
+        const msg = uiLang === "zh-HK" ? `起點設定為${transcript}` : `Starting location set to ${transcript}`;
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = uiLang;
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
       }
@@ -607,7 +788,7 @@ export default function Home() {
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
-      toast.error("Could not recognize speech. Please try again.");
+      toast.error(uiLang === "zh-HK" ? "無法識別語音。請再試一次。" : "Could not recognize speech. Please try again.");
       setIsListeningOrigin(false);
     };
 
@@ -616,13 +797,13 @@ export default function Home() {
     };
 
     recognition.start();
-    toast.info("Listening... Speak your starting location");
+    toast.info(uiLang === "zh-HK" ? "聆聽中...請說出起點位置" : "Listening... Speak your starting location");
   };
 
   // Start speech recognition for destination
   const startListeningDestination = () => {
     if (!recognition) {
-      toast.error("Speech recognition not supported in this browser");
+      toast.error(uiLang === "zh-HK" ? "此瀏覽器不支援語音識別" : "Speech recognition not supported in this browser");
       return;
     }
 
@@ -632,10 +813,12 @@ export default function Home() {
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setDestination(transcript);
-      toast.success(`Destination set to: ${transcript}`);
+      toast.success(`${t("to")}: ${transcript}`);
       
       if (user?.voiceNavigation) {
-        const utterance = new SpeechSynthesisUtterance(`Destination set to ${transcript}`);
+        const msg = uiLang === "zh-HK" ? `目的地設定為${transcript}` : `Destination set to ${transcript}`;
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = uiLang;
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
       }
@@ -643,7 +826,7 @@ export default function Home() {
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
-      toast.error("Could not recognize speech. Please try again.");
+      toast.error(uiLang === "zh-HK" ? "無法識別語音。請再試一次。" : "Could not recognize speech. Please try again.");
       setIsListeningDestination(false);
     };
 
@@ -652,7 +835,7 @@ export default function Home() {
     };
 
     recognition.start();
-    toast.info("Listening... Speak your destination");
+    toast.info(uiLang === "zh-HK" ? "聆聽中...請說出目的地" : "Listening... Speak your destination");
   };
 
   // Stop speech recognition
@@ -664,17 +847,19 @@ export default function Home() {
     setIsListeningDestination(false);
   };
 
-  // Toggle speech language
+  // Toggle speech and UI language
   const toggleLanguage = () => {
     const newLang = speechLang === "en-US" ? "zh-HK" : "en-US";
     setSpeechLang(newLang);
-    toast.info(`Language switched to ${newLang === "en-US" ? "English" : "中文"}`);
+    setUiLang(newLang);
+    toast.info(newLang === "en-US" ? "Language switched to English" : "語言已切換至中文");
   };
 
   // Use quick location
   const useQuickLocation = (location: typeof QUICK_LOCATIONS[0]) => {
-    setDestination(location.name);
-    toast.success(`Destination set to: ${location.name}`);
+    const name = t(location.nameKey as any);
+    setDestination(name);
+    toast.success(`${t("to")}: ${name}`);
     setShowQuickLocations(false);
   };
 
@@ -682,7 +867,7 @@ export default function Home() {
   const useHistoryItem = (item: RouteHistory) => {
     setOrigin(item.from);
     setDestination(item.to);
-    toast.success("Route loaded from history");
+    toast.success(uiLang === "zh-HK" ? "已從記錄載入路線" : "Route loaded from history");
     setShowHistory(false);
   };
 
@@ -697,17 +882,17 @@ export default function Home() {
   // Submit accessibility note
   const submitNote = async () => {
     if (!user) {
-      toast.error("Please log in to add notes");
+      toast.error(uiLang === "zh-HK" ? "請登入以新增備註" : "Please log in to add notes");
       return;
     }
 
     if (!noteLocation) {
-      toast.error("Please select a location on the map");
+      toast.error(uiLang === "zh-HK" ? "請在地圖上選擇位置" : "Please select a location on the map");
       return;
     }
 
     if (!noteComment.trim()) {
-      toast.error("Please enter a comment");
+      toast.error(uiLang === "zh-HK" ? "請輸入評論" : "Please enter a comment");
       return;
     }
 
@@ -728,10 +913,10 @@ export default function Home() {
       // Photo upload would be handled via a separate upload endpoint
       // For now, notes are submitted without photos
       if (notePhotos.length > 0) {
-        toast.info("Photo upload feature coming soon!");
+        toast.info(uiLang === "zh-HK" ? "相片上傳功能即將推出！" : "Photo upload feature coming soon!");
       }
 
-      toast.success("Thank you for contributing to the community!");
+      toast.success(uiLang === "zh-HK" ? "感謝您為社區作出貢獻！" : "Thank you for contributing to the community!");
       setShowAddNote(false);
       setNoteLocation(null);
       setNoteComment("");
@@ -740,7 +925,7 @@ export default function Home() {
       setNoteCondition("good");
     } catch (error) {
       console.error("Error submitting note:", error);
-      toast.error("Failed to submit note. Please try again.");
+      toast.error(uiLang === "zh-HK" ? "提交備註失敗。請再試一次。" : "Failed to submit note. Please try again.");
     } finally {
       setIsUploadingNote(false);
     }
@@ -763,8 +948,8 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Skip to main content for screen readers */}
-      <a href="#main-content" className="skip-to-main">
-        Skip to main content
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-primary text-primary-foreground p-4 z-50">
+        {t("skipToMain")}
       </a>
 
       {/* Header */}
@@ -772,14 +957,14 @@ export default function Home() {
         <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Accessibility className="w-10 h-10" />
-            <h1 className="text-2xl font-bold">HK Accessible Map</h1>
+            <h1 className="text-2xl font-bold">{t("appTitle")}</h1>
           </div>
           <Button
             variant="ghost"
             size="lg"
             onClick={() => setShowMenu(!showMenu)}
             className="text-primary-foreground hover:bg-primary-foreground/10"
-            aria-label="Toggle menu"
+            aria-label={t("toggleMenu")}
           >
             {showMenu ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
           </Button>
@@ -797,11 +982,11 @@ export default function Home() {
               onClick={() => window.location.href = '/saved-locations'}
             >
               <MapPin className="w-6 h-6 mr-3" />
-              Saved Locations
+              {t("savedLocations")}
             </Button>
             <Button variant="outline" size="lg" className="w-full justify-start text-lg">
               <Navigation className="w-6 h-6 mr-3" />
-              Route History
+              {t("routeHistory")}
             </Button>
             <Button 
               variant="outline" 
@@ -810,7 +995,7 @@ export default function Home() {
               onClick={() => window.location.href = '/settings'}
             >
               <Volume2 className="w-6 h-6 mr-3" />
-              Settings
+              {t("settings")}
             </Button>
           </div>
         </div>
@@ -822,9 +1007,9 @@ export default function Home() {
         <div className="lg:w-96 bg-card border-r-2 border-border p-4 space-y-4 overflow-y-auto max-h-screen">
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-xl">Plan Your Route</CardTitle>
+              <CardTitle className="text-xl">{t("planRoute")}</CardTitle>
               <CardDescription className="text-base">
-                Find barrier-free accessible routes in Hong Kong
+                {t("findRoutes")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -834,7 +1019,7 @@ export default function Home() {
                   onClick={toggleLanguage}
                   variant="outline"
                   size="sm"
-                  className="text-sm"
+                  className="text-sm font-semibold"
                 >
                   {speechLang === "en-US" ? "EN" : "中"}
                 </Button>
@@ -842,12 +1027,12 @@ export default function Home() {
 
               <div className="space-y-2">
                 <label htmlFor="origin" className="text-base font-semibold">
-                  From
+                  {t("from")}
                 </label>
                 <div className="flex gap-2">
                   <Input
                     id="origin"
-                    placeholder="Enter or speak starting location"
+                    placeholder={t("enterOrigin")}
                     value={origin}
                     onChange={(e) => setOrigin(e.target.value)}
                     className="text-base min-h-[3rem]"
@@ -857,7 +1042,7 @@ export default function Home() {
                     variant="outline"
                     size="lg"
                     className="shrink-0"
-                    aria-label="Use current location"
+                    aria-label={t("useCurrentLocation")}
                   >
                     <Navigation className="w-6 h-6" />
                   </Button>
@@ -866,7 +1051,7 @@ export default function Home() {
                     variant={isListeningOrigin ? "destructive" : "outline"}
                     size="lg"
                     className="shrink-0"
-                    aria-label={isListeningOrigin ? "Stop listening" : "Speak origin"}
+                    aria-label={isListeningOrigin ? t("stopListening") : t("speakOrigin")}
                   >
                     {isListeningOrigin ? <MicOff className="w-6 h-6 animate-pulse" /> : <Mic className="w-6 h-6" />}
                   </Button>
@@ -880,7 +1065,7 @@ export default function Home() {
                   variant="ghost"
                   size="lg"
                   className="w-12 h-12 rounded-full"
-                  aria-label="Swap origin and destination"
+                  aria-label={t("swapLocations")}
                   disabled={!origin || !destination}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -892,12 +1077,12 @@ export default function Home() {
 
               <div className="space-y-2">
                 <label htmlFor="destination" className="text-base font-semibold">
-                  To
+                  {t("to")}
                 </label>
                 <div className="flex gap-2">
                   <Input
                     id="destination"
-                    placeholder="Enter or speak destination"
+                    placeholder={t("enterDestination")}
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     className="text-base min-h-[3rem]"
@@ -907,7 +1092,7 @@ export default function Home() {
                     variant={isListeningDestination ? "destructive" : "outline"}
                     size="lg"
                     className="shrink-0"
-                    aria-label={isListeningDestination ? "Stop listening" : "Speak destination"}
+                    aria-label={isListeningDestination ? t("stopListening") : t("speakDestination")}
                   >
                     {isListeningDestination ? <MicOff className="w-6 h-6 animate-pulse" /> : <Mic className="w-6 h-6" />}
                   </Button>
@@ -923,7 +1108,7 @@ export default function Home() {
                   className="flex-1"
                 >
                   <Clock className="w-4 h-4 mr-2" />
-                  History
+                  {t("history")}
                 </Button>
                 <Button
                   onClick={() => setShowQuickLocations(!showQuickLocations)}
@@ -932,7 +1117,7 @@ export default function Home() {
                   className="flex-1"
                 >
                   <MapPin className="w-4 h-4 mr-2" />
-                  Quick Locations
+                  {t("quickLocations")}
                 </Button>
               </div>
 
@@ -940,7 +1125,7 @@ export default function Home() {
               {showHistory && routeHistory.length > 0 && (
                 <Card className="bg-muted">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">Recent Routes</CardTitle>
+                    <CardTitle className="text-sm">{t("recentRoutes")}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {routeHistory.slice(0, 5).map((item, idx) => (
@@ -965,7 +1150,7 @@ export default function Home() {
               {showQuickLocations && (
                 <Card className="bg-muted">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm">Quick Destinations</CardTitle>
+                    <CardTitle className="text-sm">{t("quickDestinations")}</CardTitle>
                   </CardHeader>
                   <CardContent className="grid grid-cols-1 gap-2">
                     {QUICK_LOCATIONS.map((loc, idx) => {
@@ -980,7 +1165,7 @@ export default function Home() {
                         >
                           <Icon className="w-5 h-5 mr-3 shrink-0" />
                           <div className="text-left">
-                            <div className="font-semibold text-sm">{loc.name}</div>
+                            <div className="font-semibold text-sm">{t(loc.nameKey as any)}</div>
                             <div className="text-xs text-muted-foreground">{loc.address}</div>
                           </div>
                         </Button>
@@ -993,7 +1178,7 @@ export default function Home() {
               {/* Travel mode selection */}
               <div className="space-y-2">
                 <label className="text-base font-semibold">
-                  Travel Mode
+                  {t("travelMode")}
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -1008,7 +1193,7 @@ export default function Home() {
                       <circle cx="8" cy="16" r="1"/>
                       <circle cx="16" cy="16" r="1"/>
                     </svg>
-                    Public Transport
+                    {t("publicTransport")}
                   </Button>
                   <Button
                     onClick={() => setTravelMode("WALKING")}
@@ -1021,7 +1206,7 @@ export default function Home() {
                       <path d="M10 22v-6l-2-2v-4l4-1 2 3h3"/>
                       <path d="M14 22v-8l2-2"/>
                     </svg>
-                    Walking Only
+                    {t("walkingOnly")}
                   </Button>
                 </div>
               </div>
@@ -1036,12 +1221,12 @@ export default function Home() {
                   {isCalculating ? (
                     <>
                       <Loader2 className="w-6 h-6 mr-2 animate-spin" />
-                      Calculating...
+                      {t("calculating")}
                     </>
                   ) : (
                     <>
                       <Search className="w-6 h-6 mr-2" />
-                      Find Accessible Route
+                      {t("findAccessibleRoute")}
                     </>
                   )}
                 </Button>
@@ -1053,13 +1238,13 @@ export default function Home() {
                     size="lg"
                   >
                     <X className="w-5 h-5 mr-2" />
-                    Clear Route
+                    {t("clearRoute")}
                   </Button>
                 )}
               </div>
 
               <div className="text-xs text-muted-foreground">
-                💡 Tip: Drag the markers on the map to fine-tune your route. Click anywhere on the map to add accessibility notes.
+                {t("tip")}
               </div>
             </CardContent>
           </Card>
@@ -1069,7 +1254,7 @@ export default function Home() {
             <Card className="border-2 border-primary">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Turn-by-Turn Navigation</CardTitle>
+                  <CardTitle className="text-lg">{t("turnByTurnNav")}</CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1079,7 +1264,7 @@ export default function Home() {
                   </Button>
                 </div>
                 <CardDescription className="text-sm">
-                  Step {currentStepIndex + 1} of {navigationSteps.length}
+                  {t("stepOf", { current: currentStepIndex + 1, total: navigationSteps.length })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1098,7 +1283,7 @@ export default function Home() {
                       {navigationSteps[currentStepIndex]?.facilityType === "stairs" && (
                         <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm">
                           <AlertTriangle className="w-4 h-4" />
-                          <span>Stairs detected - look for accessible alternative</span>
+                          <span>{uiLang === "zh-HK" ? "偵測到樓梯 - 尋找無障礙替代路線" : "Stairs detected - look for accessible alternative"}</span>
                         </div>
                       )}
                     </div>
@@ -1115,7 +1300,7 @@ export default function Home() {
                     disabled={!user?.voiceNavigation}
                   >
                     <Play className="w-5 h-5 mr-2" />
-                    Speak Step
+                    {t("speakStep")}
                   </Button>
                   <Button
                     onClick={nextStep}
@@ -1123,7 +1308,7 @@ export default function Home() {
                     className="flex-1"
                     disabled={currentStepIndex >= navigationSteps.length - 1}
                   >
-                    Next Step
+                    {t("nextStep")}
                   </Button>
                 </div>
 
@@ -1151,38 +1336,38 @@ export default function Home() {
           {/* Legend */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-lg">Map Legend</CardTitle>
+              <CardTitle className="text-lg">{t("mapLegend")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
                   ↕
                 </div>
-                <span className="text-base">Accessible Lifts</span>
+                <span className="text-base">{t("accessibleLifts")}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">
                   ⚠
                 </div>
-                <span className="text-base">Out of Service Lifts</span>
+                <span className="text-base">{t("outOfServiceLifts")}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
                   ═
                 </div>
-                <span className="text-base">Accessible Footbridges</span>
+                <span className="text-base">{t("accessibleFootbridges")}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold">
                   ⏱
                 </div>
-                <span className="text-base">Extended Crossing Time</span>
+                <span className="text-base">{t("extendedCrossingTime")}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
                   📍
                 </div>
-                <span className="text-base">Accessible Locations</span>
+                <span className="text-base">{t("accessibleLocations")}</span>
               </div>
             </CardContent>
           </Card>
@@ -1203,19 +1388,19 @@ export default function Home() {
       <Dialog open={showAddNote} onOpenChange={setShowAddNote}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl">Add Accessibility Note</DialogTitle>
+            <DialogTitle className="text-xl">{t("addNote")}</DialogTitle>
             <DialogDescription>
-              Share your experience to help the community
+              {t("shareExperience")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold">Location</label>
+              <label className="text-sm font-semibold">{t("location")}</label>
               <p className="text-sm text-muted-foreground">{noteLocation?.name}</p>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Rating</label>
+              <label className="text-sm font-semibold">{t("rating")}</label>
               <div className="flex gap-2 mt-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Button
@@ -1231,7 +1416,7 @@ export default function Home() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Condition</label>
+              <label className="text-sm font-semibold">{t("condition")}</label>
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {(["excellent", "good", "fair", "poor", "inaccessible"] as const).map((cond) => (
                   <Button
@@ -1239,18 +1424,17 @@ export default function Home() {
                     variant={noteCondition === cond ? "default" : "outline"}
                     size="sm"
                     onClick={() => setNoteCondition(cond)}
-                    className="capitalize"
                   >
-                    {cond}
+                    {t(cond)}
                   </Button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Comment</label>
+              <label className="text-sm font-semibold">{t("comment")}</label>
               <Textarea
-                placeholder="Describe the accessibility conditions..."
+                placeholder={t("describeConditions")}
                 value={noteComment}
                 onChange={(e) => setNoteComment(e.target.value)}
                 className="mt-2 min-h-[100px]"
@@ -1258,7 +1442,7 @@ export default function Home() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold">Photos (optional, max 3)</label>
+              <label className="text-sm font-semibold">{t("photos")}</label>
               <Input
                 type="file"
                 accept="image/*"
@@ -1268,7 +1452,7 @@ export default function Home() {
               />
               {notePhotos.length > 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {notePhotos.length} photo(s) selected
+                  {t("photosSelected", { count: notePhotos.length })}
                 </p>
               )}
             </div>
@@ -1282,12 +1466,12 @@ export default function Home() {
                 {isUploadingNote ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
+                    {t("submitting")}
                   </>
                 ) : (
                   <>
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    Submit Note
+                    {t("submitNote")}
                   </>
                 )}
               </Button>
@@ -1296,7 +1480,7 @@ export default function Home() {
                 variant="outline"
                 disabled={isUploadingNote}
               >
-                Cancel
+                {t("cancel")}
               </Button>
             </div>
           </div>
