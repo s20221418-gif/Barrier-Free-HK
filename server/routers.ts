@@ -1,11 +1,13 @@
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import * as db from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -15,14 +17,142 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    updatePreferences: protectedProcedure
+      .input(z.object({
+        fontSize: z.enum(["normal", "large", "extra-large"]).optional(),
+        highContrast: z.boolean().optional(),
+        voiceNavigation: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUserPreferences(ctx.user.id, input);
+        return { success: true };
+      }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  accessibility: router({
+    // Get all lifts
+    getLifts: publicProcedure.query(async () => {
+      return await db.getAllLifts();
+    }),
+
+    // Get lifts near a location
+    getLiftsNearby: publicProcedure
+      .input(z.object({
+        lat: z.number(),
+        lng: z.number(),
+        radiusKm: z.number().default(1),
+      }))
+      .query(async ({ input }) => {
+        return await db.getLiftsNearLocation(input.lat, input.lng, input.radiusKm);
+      }),
+
+    // Get all footbridges
+    getFootbridges: publicProcedure.query(async () => {
+      return await db.getAllFootbridges();
+    }),
+
+    // Get accessible footbridges only
+    getAccessibleFootbridges: publicProcedure.query(async () => {
+      return await db.getAccessibleFootbridges();
+    }),
+
+    // Get all zebra crossings
+    getZebraCrossings: publicProcedure.query(async () => {
+      return await db.getAllZebraCrossings();
+    }),
+
+    // Get zebra crossings with octopus extension
+    getZebraCrossingsWithOctopus: publicProcedure.query(async () => {
+      return await db.getZebraCrossingsWithOctopus();
+    }),
+
+    // Get pedestrian network nodes
+    getPedestrianNodes: publicProcedure.query(async () => {
+      return await db.getPedestrianNodes();
+    }),
+
+    // Get accessible pedestrian nodes
+    getAccessibleNodes: publicProcedure.query(async () => {
+      return await db.getAccessiblePedestrianNodes();
+    }),
+
+    // Get pedestrian network links
+    getPedestrianLinks: publicProcedure.query(async () => {
+      return await db.getPedestrianLinks();
+    }),
+
+    // Get accessible pedestrian links (no stairs)
+    getAccessibleLinks: publicProcedure.query(async () => {
+      return await db.getAccessiblePedestrianLinks();
+    }),
+  }),
+
+  savedLocations: router({
+    // Get user's saved locations
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserSavedLocations(ctx.user.id);
+    }),
+
+    // Add a saved location
+    add: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        address: z.string().optional(),
+        latitude: z.string(),
+        longitude: z.string(),
+        category: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.addSavedLocation({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    // Delete a saved location
+    delete: protectedProcedure
+      .input(z.object({
+        locationId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteSavedLocation(input.locationId, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  routeHistory: router({
+    // Get user's route history
+    list: protectedProcedure
+      .input(z.object({
+        limit: z.number().default(10),
+      }))
+      .query(async ({ ctx, input }) => {
+        return await db.getUserRouteHistory(ctx.user.id, input.limit);
+      }),
+
+    // Add route to history
+    add: protectedProcedure
+      .input(z.object({
+        fromAddress: z.string(),
+        toAddress: z.string(),
+        fromLatitude: z.string(),
+        fromLongitude: z.string(),
+        toLatitude: z.string(),
+        toLongitude: z.string(),
+        distance: z.string().optional(),
+        duration: z.number().optional(),
+        routeData: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.addRouteHistory({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
