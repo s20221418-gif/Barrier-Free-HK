@@ -93,3 +93,24 @@
 - [x] Integrate AccessGuide.hk accessible locations on map
 - [x] Display AccessGuide.hk location icons with proper categories
 - [x] Make AccessGuide.hk locations clickable for route planning
+
+## Advanced Features - Phase 3
+- [x] Extend database schema for lift status tracking
+- [x] Add table for user-contributed accessibility notes
+- [x] Add table for photo uploads linked to notes
+- [x] Create lift status monitoring system
+- [x] Display red warning badges on out-of-service lifts
+- [x] Integrate EMSD lift maintenance data
+- [x] Update route algorithm to avoid broken lifts
+- [x] Build turn-by-turn navigation panel UI
+- [x] Display step-by-step instructions with icons
+- [x] Show estimated time per navigation segment
+- [x] Add lift/ramp/stairs icons to each step
+- [x] Implement "Next Step" audio button
+- [x] Auto-advance steps during active navigation
+- [x] Create user notes submission form
+- [x] Allow photo upload with notes
+- [x] Display user notes on facility markers
+- [x] Add rating system for accessibility conditions
+- [x] Implement note moderation for authenticated users
+- [x] Show photo gallery for each location

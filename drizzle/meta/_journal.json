@@ -15,6 +15,13 @@
       "when": 1768229438154,
       "tag": "0001_serious_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768231909510,
+      "tag": "0002_cold_bug",
+      "breakpoints": true
     }
   ]
 }

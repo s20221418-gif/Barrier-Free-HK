@@ -195,3 +195,71 @@ export const routeHistory = mysqlTable("routeHistory", {
 
 export type RouteHistory = typeof routeHistory.$inferSelect;
 export type InsertRouteHistory = typeof routeHistory.$inferInsert;
+
+/**
+ * Lift status updates for real-time monitoring
+ */
+export const liftStatus = mysqlTable("liftStatus", {
+  id: int("id").autoincrement().primaryKey(),
+  liftId: int("liftId").notNull(),
+  status: mysqlEnum("status", ["operational", "out_of_service", "under_maintenance", "unknown"]).default("operational").notNull(),
+  reportedBy: varchar("reportedBy", { length: 100 }), // "system" or "user:{userId}"
+  reportedAt: timestamp("reportedAt").defaultNow().notNull(),
+  estimatedFixDate: timestamp("estimatedFixDate"),
+  notes: text("notes"),
+  isVerified: boolean("isVerified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  liftIdx: index("lift_idx").on(table.liftId),
+  statusIdx: index("status_idx").on(table.status),
+  reportedAtIdx: index("reported_at_idx").on(table.reportedAt),
+}));
+
+export type LiftStatus = typeof liftStatus.$inferSelect;
+export type InsertLiftStatus = typeof liftStatus.$inferInsert;
+
+/**
+ * User-contributed accessibility notes
+ */
+export const accessibilityNotes = mysqlTable("accessibilityNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  facilityType: mysqlEnum("facilityType", ["lift", "footbridge", "zebra_crossing", "mtr_station", "bus_stop", "general"]).notNull(),
+  facilityId: int("facilityId"), // Reference to lift, footbridge, etc.
+  locationName: text("locationName").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  rating: int("rating").notNull(), // 1-5 stars
+  condition: mysqlEnum("condition", ["excellent", "good", "fair", "poor", "inaccessible"]).notNull(),
+  comment: text("comment").notNull(),
+  isVerified: boolean("isVerified").default(false).notNull(),
+  verifiedBy: int("verifiedBy"), // Admin user ID
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdx: index("user_idx").on(table.userId),
+  locationIdx: index("location_idx").on(table.latitude, table.longitude),
+  facilityIdx: index("facility_idx").on(table.facilityType, table.facilityId),
+  createdAtIdx: index("created_at_idx").on(table.createdAt),
+}));
+
+export type AccessibilityNote = typeof accessibilityNotes.$inferSelect;
+export type InsertAccessibilityNote = typeof accessibilityNotes.$inferInsert;
+
+/**
+ * Photos attached to accessibility notes
+ */
+export const notePhotos = mysqlTable("notePhotos", {
+  id: int("id").autoincrement().primaryKey(),
+  noteId: int("noteId").notNull(),
+  photoUrl: text("photoUrl").notNull(),
+  photoKey: text("photoKey").notNull(), // S3 key for deletion
+  caption: text("caption"),
+  uploadedBy: int("uploadedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  noteIdx: index("note_idx").on(table.noteId),
+}));
+
+export type NotePhoto = typeof notePhotos.$inferSelect;
+export type InsertNotePhoto = typeof notePhotos.$inferInsert;

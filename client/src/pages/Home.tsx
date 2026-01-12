@@ -3,6 +3,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
 import { 
@@ -19,15 +21,32 @@ import {
   Clock,
   Hospital,
   Building2,
-  Train
+  Train,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Camera,
+  Star,
+  MessageSquare,
+  Play
 } from "lucide-react";
 import { toast } from "sonner";
+// Storage will be handled via tRPC procedures
 
 // Route history interface
 interface RouteHistory {
   from: string;
   to: string;
   timestamp: number;
+}
+
+// Navigation step interface
+interface NavigationStep {
+  instruction: string;
+  distance: string;
+  duration: string;
+  travelMode: string;
+  facilityType?: "lift" | "ramp" | "stairs" | "level";
 }
 
 // Quick location shortcuts
@@ -76,11 +95,31 @@ export default function Home() {
   const [routeHistory, setRouteHistory] = useState<RouteHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showQuickLocations, setShowQuickLocations] = useState(false);
+  
+  // Turn-by-turn navigation
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [navigationSteps, setNavigationSteps] = useState<NavigationStep[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  
+  // User notes
+  const [showAddNote, setShowAddNote] = useState(false);
+  const [noteLocation, setNoteLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
+  const [noteRating, setNoteRating] = useState(3);
+  const [noteCondition, setNoteCondition] = useState<"excellent" | "good" | "fair" | "poor" | "inaccessible">("good");
+  const [noteComment, setNoteComment] = useState("");
+  const [notePhotos, setNotePhotos] = useState<File[]>([]);
+  const [isUploadingNote, setIsUploadingNote] = useState(false);
 
   // Fetch accessibility data
   const { data: lifts } = trpc.accessibility.getLifts.useQuery();
   const { data: footbridges } = trpc.accessibility.getAccessibleFootbridges.useQuery();
   const { data: zebraCrossings } = trpc.accessibility.getZebraCrossingsWithOctopus.useQuery();
+  const { data: liftStatuses } = trpc.liftStatus.getAllStatuses.useQuery();
+  const { data: outOfServiceLifts } = trpc.liftStatus.getOutOfService.useQuery();
+  
+  // Mutations
+  const addNoteMutation = trpc.accessibilityNotes.add.useMutation();
+  const addPhotoMutation = trpc.accessibilityNotes.addPhoto.useMutation();
 
   // Load route history from localStorage
   useEffect(() => {
@@ -169,32 +208,60 @@ export default function Home() {
         }
       );
     }
-  }, []);
+
+    // Add click listener for adding notes
+    mapInstance.addListener("click", (e: google.maps.MapMouseEvent) => {
+      if (e.latLng && geocoder) {
+        geocoder.geocode({ location: e.latLng }, (results, status) => {
+          if (status === "OK" && results && results[0]) {
+            setNoteLocation({
+              lat: e.latLng!.lat(),
+              lng: e.latLng!.lng(),
+              name: results[0].formatted_address,
+            });
+            setShowAddNote(true);
+          }
+        });
+      }
+    });
+  }, [geocoder]);
 
   // Add markers for accessibility features
   useEffect(() => {
-    if (!map) return;
+    if (!map || !liftStatuses) return;
 
-    // Add lift markers
+    const outOfServiceIds = new Set(outOfServiceLifts?.map(l => l.id) || []);
+
+    // Add lift markers with status
     lifts?.forEach((lift) => {
       if (lift.latitude && lift.longitude) {
-        new google.maps.Marker({
+        const isOutOfService = outOfServiceIds.has(lift.id);
+        
+        const marker = new google.maps.Marker({
           position: {
             lat: parseFloat(lift.latitude),
             lng: parseFloat(lift.longitude),
           },
           map,
-          title: lift.location,
+          title: lift.location + (isOutOfService ? " (OUT OF SERVICE)" : ""),
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${isOutOfService ? '#ef4444' : '#10b981'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 9l7-7 7 7"/>
                 <path d="M5 15l7 7 7-7"/>
+                ${isOutOfService ? '<circle cx="12" cy="12" r="8" fill="#ef4444" opacity="0.3"/>' : ''}
               </svg>
             `),
-            scaledSize: new google.maps.Size(32, 32),
+            scaledSize: new google.maps.Size(36, 36),
           },
         });
+
+        // Show warning for out-of-service lifts
+        if (isOutOfService) {
+          marker.addListener("click", () => {
+            toast.error(`⚠️ ${lift.location} is currently out of service`);
+          });
+        }
       }
     });
 
@@ -268,7 +335,7 @@ export default function Home() {
         toast.success(`Destination set to: ${location.name}`);
       });
     });
-  }, [map, lifts, footbridges, zebraCrossings]);
+  }, [map, lifts, footbridges, zebraCrossings, liftStatuses, outOfServiceLifts]);
 
   // Create draggable origin marker
   const createOriginMarker = (position: google.maps.LatLng) => {
@@ -334,6 +401,38 @@ export default function Home() {
     setDestinationMarker(marker);
   };
 
+  // Parse route steps for turn-by-turn navigation
+  const parseRouteSteps = (route: google.maps.DirectionsRoute): NavigationStep[] => {
+    const steps: NavigationStep[] = [];
+    const leg = route.legs[0];
+    
+    if (!leg || !leg.steps) return steps;
+
+    leg.steps.forEach((step) => {
+      // Detect facility type from instructions
+      let facilityType: NavigationStep["facilityType"] = "level";
+      const instruction = step.instructions.toLowerCase();
+      
+      if (instruction.includes("lift") || instruction.includes("elevator")) {
+        facilityType = "lift";
+      } else if (instruction.includes("ramp")) {
+        facilityType = "ramp";
+      } else if (instruction.includes("stairs") || instruction.includes("steps")) {
+        facilityType = "stairs";
+      }
+
+      steps.push({
+        instruction: step.instructions.replace(/<[^>]*>/g, ""), // Remove HTML tags
+        distance: step.distance?.text || "",
+        duration: step.duration?.text || "",
+        travelMode: step.travel_mode,
+        facilityType,
+      });
+    });
+
+    return steps;
+  };
+
   // Calculate accessible route
   const calculateRoute = async () => {
     if (!directionsService || !directionsRenderer || !origin || !destination) {
@@ -369,6 +468,12 @@ export default function Home() {
           if (leg.end_location) {
             createDestinationMarker(leg.end_location);
           }
+          
+          // Parse steps for turn-by-turn navigation
+          const steps = parseRouteSteps(route);
+          setNavigationSteps(steps);
+          setCurrentStepIndex(0);
+          setShowNavigation(true);
           
           // Build transit info message
           let message = `Route found: ${leg.distance?.text}, ${leg.duration?.text}`;
@@ -407,6 +512,39 @@ export default function Home() {
     }
   };
 
+  // Speak current navigation step
+  const speakStep = (step: NavigationStep) => {
+    if (!user?.voiceNavigation) return;
+    
+    let text = step.instruction;
+    if (step.facilityType === "lift") {
+      text += ". Use the accessible lift.";
+    } else if (step.facilityType === "ramp") {
+      text += ". Accessible ramp available.";
+    } else if (step.facilityType === "stairs") {
+      text += ". Warning: stairs ahead. Look for alternative accessible route.";
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Navigate to next step
+  const nextStep = () => {
+    if (currentStepIndex < navigationSteps.length - 1) {
+      const newIndex = currentStepIndex + 1;
+      setCurrentStepIndex(newIndex);
+      speakStep(navigationSteps[newIndex]);
+    } else {
+      toast.success("You have arrived at your destination!");
+      if (user?.voiceNavigation) {
+        const utterance = new SpeechSynthesisUtterance("You have arrived at your destination.");
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+  };
+
   // Use current location as origin
   const useCurrentLocation = () => {
     if (userLocation) {
@@ -439,6 +577,9 @@ export default function Home() {
       setDestinationMarker(null);
     }
     setCurrentRoute(null);
+    setShowNavigation(false);
+    setNavigationSteps([]);
+    setCurrentStepIndex(0);
     toast.info("Route cleared");
   };
 
@@ -457,7 +598,6 @@ export default function Home() {
       setOrigin(transcript);
       toast.success(`Origin set to: ${transcript}`);
       
-      // Speak confirmation if voice navigation is enabled
       if (user?.voiceNavigation) {
         const utterance = new SpeechSynthesisUtterance(`Starting location set to ${transcript}`);
         utterance.rate = 0.9;
@@ -494,7 +634,6 @@ export default function Home() {
       setDestination(transcript);
       toast.success(`Destination set to: ${transcript}`);
       
-      // Speak confirmation if voice navigation is enabled
       if (user?.voiceNavigation) {
         const utterance = new SpeechSynthesisUtterance(`Destination set to ${transcript}`);
         utterance.rate = 0.9;
@@ -545,6 +684,80 @@ export default function Home() {
     setDestination(item.to);
     toast.success("Route loaded from history");
     setShowHistory(false);
+  };
+
+  // Handle photo selection
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).slice(0, 3); // Max 3 photos
+      setNotePhotos(files);
+    }
+  };
+
+  // Submit accessibility note
+  const submitNote = async () => {
+    if (!user) {
+      toast.error("Please log in to add notes");
+      return;
+    }
+
+    if (!noteLocation) {
+      toast.error("Please select a location on the map");
+      return;
+    }
+
+    if (!noteComment.trim()) {
+      toast.error("Please enter a comment");
+      return;
+    }
+
+    setIsUploadingNote(true);
+
+    try {
+      // Add the note
+      const result = await addNoteMutation.mutateAsync({
+        facilityType: "general",
+        locationName: noteLocation.name,
+        latitude: noteLocation.lat.toString(),
+        longitude: noteLocation.lng.toString(),
+        rating: noteRating,
+        condition: noteCondition,
+        comment: noteComment,
+      });
+
+      // Photo upload would be handled via a separate upload endpoint
+      // For now, notes are submitted without photos
+      if (notePhotos.length > 0) {
+        toast.info("Photo upload feature coming soon!");
+      }
+
+      toast.success("Thank you for contributing to the community!");
+      setShowAddNote(false);
+      setNoteLocation(null);
+      setNoteComment("");
+      setNotePhotos([]);
+      setNoteRating(3);
+      setNoteCondition("good");
+    } catch (error) {
+      console.error("Error submitting note:", error);
+      toast.error("Failed to submit note. Please try again.");
+    } finally {
+      setIsUploadingNote(false);
+    }
+  };
+
+  // Get facility icon
+  const getFacilityIcon = (type?: string) => {
+    switch (type) {
+      case "lift":
+        return "🛗";
+      case "ramp":
+        return "♿";
+      case "stairs":
+        return "🚶";
+      default:
+        return "➡️";
+    }
   };
 
   return (
@@ -846,10 +1059,94 @@ export default function Home() {
               </div>
 
               <div className="text-xs text-muted-foreground">
-                💡 Tip: Drag the markers on the map to fine-tune your route
+                💡 Tip: Drag the markers on the map to fine-tune your route. Click anywhere on the map to add accessibility notes.
               </div>
             </CardContent>
           </Card>
+
+          {/* Turn-by-turn navigation panel */}
+          {showNavigation && navigationSteps.length > 0 && (
+            <Card className="border-2 border-primary">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Turn-by-Turn Navigation</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowNavigation(false)}
+                  >
+                    {showNavigation ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </Button>
+                </div>
+                <CardDescription className="text-sm">
+                  Step {currentStepIndex + 1} of {navigationSteps.length}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Current step */}
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl">{getFacilityIcon(navigationSteps[currentStepIndex]?.facilityType)}</span>
+                    <div className="flex-1">
+                      <p className="text-base font-semibold mb-2">
+                        {navigationSteps[currentStepIndex]?.instruction}
+                      </p>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>{navigationSteps[currentStepIndex]?.distance}</span>
+                        <span>{navigationSteps[currentStepIndex]?.duration}</span>
+                      </div>
+                      {navigationSteps[currentStepIndex]?.facilityType === "stairs" && (
+                        <div className="mt-2 flex items-center gap-2 text-amber-600 text-sm">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span>Stairs detected - look for accessible alternative</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation controls */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => speakStep(navigationSteps[currentStepIndex])}
+                    variant="outline"
+                    size="lg"
+                    className="flex-1"
+                    disabled={!user?.voiceNavigation}
+                  >
+                    <Play className="w-5 h-5 mr-2" />
+                    Speak Step
+                  </Button>
+                  <Button
+                    onClick={nextStep}
+                    size="lg"
+                    className="flex-1"
+                    disabled={currentStepIndex >= navigationSteps.length - 1}
+                  >
+                    Next Step
+                  </Button>
+                </div>
+
+                {/* All steps preview */}
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {navigationSteps.map((step, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-2 rounded text-sm ${idx === currentStepIndex ? 'bg-primary/20' : 'bg-muted/50'}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg">{getFacilityIcon(step.facilityType)}</span>
+                        <div className="flex-1">
+                          <p className="font-medium">{idx + 1}. {step.instruction}</p>
+                          <p className="text-xs text-muted-foreground">{step.distance} • {step.duration}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Legend */}
           <Card className="border-2">
@@ -862,6 +1159,12 @@ export default function Home() {
                   ↕
                 </div>
                 <span className="text-base">Accessible Lifts</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">
+                  ⚠
+                </div>
+                <span className="text-base">Out of Service Lifts</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
@@ -895,6 +1198,110 @@ export default function Home() {
           />
         </div>
       </main>
+
+      {/* Add Note Dialog */}
+      <Dialog open={showAddNote} onOpenChange={setShowAddNote}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Add Accessibility Note</DialogTitle>
+            <DialogDescription>
+              Share your experience to help the community
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold">Location</label>
+              <p className="text-sm text-muted-foreground">{noteLocation?.name}</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Rating</label>
+              <div className="flex gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Button
+                    key={star}
+                    variant={noteRating >= star ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setNoteRating(star)}
+                  >
+                    <Star className="w-4 h-4" />
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Condition</label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {(["excellent", "good", "fair", "poor", "inaccessible"] as const).map((cond) => (
+                  <Button
+                    key={cond}
+                    variant={noteCondition === cond ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setNoteCondition(cond)}
+                    className="capitalize"
+                  >
+                    {cond}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Comment</label>
+              <Textarea
+                placeholder="Describe the accessibility conditions..."
+                value={noteComment}
+                onChange={(e) => setNoteComment(e.target.value)}
+                className="mt-2 min-h-[100px]"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold">Photos (optional, max 3)</label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoSelect}
+                className="mt-2"
+              />
+              {notePhotos.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {notePhotos.length} photo(s) selected
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={submitNote}
+                disabled={isUploadingNote || !noteComment.trim()}
+                className="flex-1"
+              >
+                {isUploadingNote ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Submit Note
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => setShowAddNote(false)}
+                variant="outline"
+                disabled={isUploadingNote}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

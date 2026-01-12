@@ -10,13 +10,22 @@ import {
   pedestrianLinks,
   savedLocations,
   routeHistory,
+  liftStatus,
+  accessibilityNotes,
+  notePhotos,
   type Lift,
   type Footbridge,
   type ZebraCrossing,
   type PedestrianNode,
   type PedestrianLink,
   type SavedLocation,
-  type RouteHistory
+  type RouteHistory,
+  type LiftStatus,
+  type InsertLiftStatus,
+  type AccessibilityNote,
+  type InsertAccessibilityNote,
+  type NotePhoto,
+  type InsertNotePhoto
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -277,4 +286,131 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function toRad(degrees: number): number {
   return degrees * (Math.PI / 180);
+}
+
+// Lift status monitoring
+
+export async function getLatestLiftStatus(liftId: number): Promise<LiftStatus | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const results = await db.select().from(liftStatus)
+    .where(eq(liftStatus.liftId, liftId))
+    .orderBy(sql`${liftStatus.reportedAt} DESC`)
+    .limit(1);
+  
+  return results[0];
+}
+
+export async function getAllLiftStatuses(): Promise<Map<number, LiftStatus>> {
+  const db = await getDb();
+  if (!db) return new Map();
+
+  const statuses = await db.select().from(liftStatus)
+    .orderBy(sql`${liftStatus.reportedAt} DESC`);
+  
+  // Get the latest status for each lift
+  const statusMap = new Map<number, LiftStatus>();
+  for (const status of statuses) {
+    if (!statusMap.has(status.liftId)) {
+      statusMap.set(status.liftId, status);
+    }
+  }
+  
+  return statusMap;
+}
+
+export async function getOutOfServiceLifts(): Promise<Lift[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get all out-of-service lift IDs
+  const statusMap = await getAllLiftStatuses();
+  const outOfServiceIds: number[] = [];
+  
+  for (const [liftId, status] of Array.from(statusMap.entries())) {
+    if (status.status === "out_of_service" || status.status === "under_maintenance") {
+      outOfServiceIds.push(liftId);
+    }
+  }
+
+  if (outOfServiceIds.length === 0) return [];
+
+  // Get lift details for out-of-service lifts
+  const result = await db.select().from(lifts)
+    .where(sql`${lifts.id} IN (${sql.join(outOfServiceIds.map(id => sql`${id}`), sql`, `)})`);
+  
+  return result;
+}
+
+export async function reportLiftStatus(status: InsertLiftStatus) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.insert(liftStatus).values(status);
+}
+
+// Accessibility notes
+
+export async function getAccessibilityNotes(latitude: number, longitude: number, radiusKm: number = 1): Promise<AccessibilityNote[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Simple radius search - in production, use spatial indexing
+  const allNotes = await db.select().from(accessibilityNotes)
+    .orderBy(sql`${accessibilityNotes.createdAt} DESC`);
+  
+  return allNotes.filter(note => {
+    const noteLat = parseFloat(note.latitude as any);
+    const noteLng = parseFloat(note.longitude as any);
+    const distance = calculateDistance(latitude, longitude, noteLat, noteLng);
+    return distance <= radiusKm;
+  });
+}
+
+export async function getNotesByFacility(facilityType: string, facilityId: number): Promise<AccessibilityNote[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(accessibilityNotes)
+    .where(
+      and(
+        eq(accessibilityNotes.facilityType, facilityType as any),
+        eq(accessibilityNotes.facilityId, facilityId)
+      )
+    )
+    .orderBy(sql`${accessibilityNotes.createdAt} DESC`);
+}
+
+export async function addAccessibilityNote(note: InsertAccessibilityNote): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(accessibilityNotes).values(note);
+  return result[0].insertId;
+}
+
+export async function addNotePhoto(photo: InsertNotePhoto) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.insert(notePhotos).values(photo);
+}
+
+export async function getNotePhotos(noteId: number): Promise<NotePhoto[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(notePhotos)
+    .where(eq(notePhotos.noteId, noteId))
+    .orderBy(sql`${notePhotos.createdAt} DESC`);
+}
+
+export async function getUserNotes(userId: number): Promise<AccessibilityNote[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(accessibilityNotes)
+    .where(eq(accessibilityNotes.userId, userId))
+    .orderBy(sql`${accessibilityNotes.createdAt} DESC`);
 }
