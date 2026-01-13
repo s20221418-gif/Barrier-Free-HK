@@ -318,3 +318,129 @@ input:focus, textarea:focus, select:focus {
     animation: spin-slow 3s linear infinite;
   }
 }
+
+
+/* Enhanced Cartoon Theme - Bold Borders, Exaggerated Shadows, Comic Effects */
+
+/* Card and Panel Styles - Bold Cartoon Borders */
+.card,
+.rounded-lg,
+.rounded-xl {
+  border: 3px solid #ec4899 !important;
+  box-shadow: 
+    4px 4px 0px rgba(236, 72, 153, 0.3),
+    8px 8px 0px rgba(168, 85, 247, 0.2),
+    12px 12px 0px rgba(236, 72, 153, 0.1);
+}
+
+/* Button Styles - Comic Book Effect */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"] {
+  border: 3px solid currentColor !important;
+  box-shadow: 
+    3px 3px 0px rgba(0, 0, 0, 0.15),
+    6px 6px 0px rgba(236, 72, 153, 0.25);
+  transform: translateY(0);
+  transition: all 0.1s ease;
+}
+
+button:hover:not(:disabled),
+[role="button"]:hover:not([aria-disabled="true"]),
+input[type="button"]:hover:not(:disabled),
+input[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    3px 3px 0px rgba(0, 0, 0, 0.2),
+    8px 8px 0px rgba(236, 72, 153, 0.35);
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]),
+input[type="button"]:active:not(:disabled),
+input[type="submit"]:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 
+    1px 1px 0px rgba(0, 0, 0, 0.1),
+    2px 2px 0px rgba(236, 72, 153, 0.15);
+}
+
+/* Input Fields - Cartoon Style */
+input,
+textarea,
+select {
+  border: 3px solid #a855f7 !important;
+  border-radius: 1.5rem !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #ec4899 !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 4px rgba(236, 72, 153, 0.2);
+}
+
+/* Comic-style "POW" effect for interactions */
+@keyframes comic-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-comic-pop {
+  animation: comic-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Exaggerated Hover Effects */
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Tooltip/Popover - Speech Bubble Style */
+[role="tooltip"],
+.tooltip,
+.popover {
+  border: 3px solid #ec4899 !important;
+  border-radius: 1.5rem !important;
+  background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
+  box-shadow: 
+    4px 4px 0px rgba(236, 72, 153, 0.3),
+    8px 8px 0px rgba(168, 85, 247, 0.2);
+}
+
+/* Comic-style decorative elements */
+.comic-border {
+  border: 4px dashed #ec4899;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(45deg, rgba(236, 72, 153, 0.05) 25%, transparent 25%, transparent 75%, rgba(236, 72, 153, 0.05) 75%, rgba(236, 72, 153, 0.05)),
+              linear-gradient(45deg, rgba(236, 72, 153, 0.05) 25%, transparent 25%, transparent 75%, rgba(236, 72, 153, 0.05) 75%, rgba(236, 72, 153, 0.05));
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Vibrant gradient backgrounds */
+.cartoon-gradient {
+  background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #fce7f3 100%);
+}
+
+/* Bold text styles */
+.cartoon-text {
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 
+    2px 2px 0px rgba(236, 72, 153, 0.3),
+    4px 4px 0px rgba(168, 85, 247, 0.2);
+}

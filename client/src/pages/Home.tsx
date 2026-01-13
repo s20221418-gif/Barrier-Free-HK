@@ -264,6 +264,34 @@ export default function Home() {
       <p className="text-pink-600 font-semibold text-lg animate-pulse">{t("calculating")}</p>
     </div>
   );
+  
+  // Cartoon mascot character for the app
+  const CartoonMascot = () => (
+    <div className="flex flex-col items-center gap-3 p-4 bg-gradient-to-b from-pink-100 to-purple-100 rounded-3xl border-4 border-pink-400 shadow-lg">
+      <svg 
+        className="w-20 h-20" 
+        viewBox="0 0 100 100" 
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="50" cy="50" r="40" fill="#ec4899" opacity="0.9"/>
+        <circle cx="50" cy="50" r="39" fill="none" stroke="white" strokeWidth="2" opacity="0.6"/>
+        <circle cx="35" cy="40" r="6" fill="white"/>
+        <circle cx="65" cy="40" r="6" fill="white"/>
+        <circle cx="37" cy="38" r="3" fill="#ec4899"/>
+        <circle cx="67" cy="38" r="3" fill="#ec4899"/>
+        <circle cx="38" cy="36" r="1.5" fill="white"/>
+        <circle cx="68" cy="36" r="1.5" fill="white"/>
+        <path d="M 30 55 Q 50 68 70 55" stroke="white" strokeWidth="4" fill="none" strokeLinecap="round"/>
+        <circle cx="20" cy="50" r="8" fill="#f472b6" opacity="0.6"/>
+        <circle cx="80" cy="50" r="8" fill="#f472b6" opacity="0.6"/>
+        <text x="50" y="15" fontSize="16" fill="#fbbf24" textAnchor="middle">★</text>
+      </svg>
+      <p className="text-center font-bold text-pink-700 text-sm">
+        {"I'm here to help!"}
+      </p>
+    </div>
+  );
+
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
@@ -1227,6 +1255,9 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Cartoon Mascot */}
+              <CartoonMascot />
+
               {/* Language toggle */}
               <div className="flex justify-end">
                 <Button
@@ -1479,6 +1510,9 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+              {/* Cartoon Mascot */}
+              <CartoonMascot />
+
                 {/* Current step */}
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <div className="flex items-start gap-3">

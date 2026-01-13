@@ -184,3 +184,15 @@
 - [x] Show spinner while calculating accessible routes
 - [x] Add loading text with spinner (e.g., "Finding accessible route...")
 - [x] Hide spinner when route calculation completes
+
+## Enhanced Cartoon Theme
+- [x] Add bold 3-4px cartoon borders to all cards and panels
+- [x] Create exaggerated drop shadows with color (not just black)
+- [x] Add comic-style speech bubbles for tooltips and messages
+- [x] Create cartoon character mascot for the app
+- [x] Add playful doodle illustrations and patterns to background
+- [x] Increase border radius for more rounded, bubbly appearance
+- [x] Add thick outlines to buttons and interactive elements
+- [x] Use more vibrant, saturated colors throughout
+- [x] Add comic-style "pow" and "wow" effects for interactions
+- [x] Create cartoon-style icons for all UI elements
