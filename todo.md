@@ -151,3 +151,8 @@
 - [x] Explain pulse animation for out-of-service lifts
 - [x] Support bilingual labels (English/Chinese)
 - [x] Position legend in bottom-right corner of map
+
+## Legend Icon Fix
+- [x] Match legend lift icons to actual map marker SVG (up/down arrows)
+- [x] Match legend colors exactly to map markers
+- [x] Update footbridge, crossing, and location icons to match map

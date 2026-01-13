@@ -1567,9 +1567,11 @@ export default function Home() {
                 <CardContent className="space-y-3 pt-0">
                   {/* Lift - Working */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">↕</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                      <circle cx="16" cy="16" r="14" fill="#ec4899" opacity="0.9"/>
+                      <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                      <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("accessibleLifts")}</p>
                       <p className="text-xs text-muted-foreground">{t("liftDescription")}</p>
@@ -1578,9 +1580,11 @@ export default function Home() {
                   
                   {/* Lift - Out of Service */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center shrink-0 animate-pulse">
-                      <span className="text-white text-xs">↕</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0 animate-pulse">
+                      <circle cx="16" cy="16" r="14" fill="#ef4444" opacity="0.9"/>
+                      <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                      <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("outOfServiceLifts")}</p>
                       <p className="text-xs text-muted-foreground">{t("outOfServiceDescription")}</p>
@@ -1589,9 +1593,12 @@ export default function Home() {
                   
                   {/* Footbridge */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">🌉</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                      <circle cx="16" cy="16" r="14" fill="#a855f7" opacity="0.9"/>
+                      <rect x="8" y="14" width="16" height="4" fill="white" rx="1"/>
+                      <rect x="10" y="10" width="2" height="8" fill="white" rx="1"/>
+                      <rect x="20" y="10" width="2" height="8" fill="white" rx="1"/>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("accessibleFootbridges")}</p>
                       <p className="text-xs text-muted-foreground">{t("footbridgeDescription")}</p>
@@ -1600,9 +1607,12 @@ export default function Home() {
                   
                   {/* Zebra Crossing */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-rose-400 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">🚶</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                      <circle cx="16" cy="16" r="14" fill="#f43f5e" opacity="0.9"/>
+                      <rect x="10" y="12" width="12" height="2" fill="white"/>
+                      <rect x="10" y="16" width="12" height="2" fill="white"/>
+                      <circle cx="16" cy="16" r="2" fill="#fbbf24"/>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("extendedCrossingTime")}</p>
                       <p className="text-xs text-muted-foreground">{t("crossingDescription")}</p>
@@ -1611,9 +1621,10 @@ export default function Home() {
                   
                   {/* Accessible Location */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">📍</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" className="shrink-0">
+                      <path d="M18 2c-5.5 0-10 4.5-10 10 0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10z" fill="#9333ea" opacity="0.9"/>
+                      <circle cx="18" cy="12" r="4" fill="white"/>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("accessibleLocations")}</p>
                       <p className="text-xs text-muted-foreground">{t("locationDescription")}</p>
@@ -1622,9 +1633,11 @@ export default function Home() {
                   
                   {/* Origin Marker */}
                   <div className="flex items-start gap-3 pt-2 border-t">
-                    <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">A</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" className="shrink-0">
+                      <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#10b981" opacity="0.9"/>
+                      <circle cx="20" cy="13" r="5" fill="white"/>
+                      <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#10b981">A</text>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("from")}</p>
                       <p className="text-xs text-muted-foreground">{t("originMarker")}</p>
@@ -1633,9 +1646,11 @@ export default function Home() {
                   
                   {/* Destination Marker */}
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center shrink-0">
-                      <span className="text-white text-xs">B</span>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" className="shrink-0">
+                      <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#f43f5e" opacity="0.9"/>
+                      <circle cx="20" cy="13" r="5" fill="white"/>
+                      <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#f43f5e">B</text>
+                    </svg>
                     <div>
                       <p className="font-medium text-sm">{t("to")}</p>
                       <p className="text-xs text-muted-foreground">{t("destinationMarker")}</p>
