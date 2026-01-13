@@ -442,13 +442,21 @@ export default function Home() {
           title: lift.location + (isOutOfService ? " (OUT OF SERVICE)" : ""),
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                <circle cx="16" cy="16" r="14" fill="${isOutOfService ? '#ef4444' : '#ec4899'}" opacity="0.9"/>
-                <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
-                <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                <!-- Cartoon lift with happy face -->
+                <circle cx="20" cy="20" r="16" fill="${isOutOfService ? '#ef4444' : '#ec4899'}" opacity="0.95"/>
+                <circle cx="20" cy="20" r="15" fill="none" stroke="white" strokeWidth="1.5" opacity="0.6"/>
+                <!-- Happy eyes -->
+                <circle cx="15" cy="16" r="2" fill="white"/>
+                <circle cx="25" cy="16" r="2" fill="white"/>
+                <!-- Smile -->
+                <path d="M 14 22 Q 20 24 26 22" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                <!-- Lift arrows -->
+                <path d="M20 10l3 3h-2v2h-2v-2h-2z" fill="white"/>
+                <path d="M20 30l-3-3h2v-2h2v2h2z" fill="white"/>
               </svg>
             `),
-            scaledSize: new google.maps.Size(32, 32),
+            scaledSize: new google.maps.Size(40, 40),
           },
         });
 
@@ -495,14 +503,18 @@ export default function Home() {
           title: bridge.name,
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                <circle cx="16" cy="16" r="14" fill="#a855f7" opacity="0.9"/>
-                <rect x="8" y="14" width="16" height="4" fill="white" rx="1"/>
-                <rect x="10" y="10" width="2" height="8" fill="white" rx="1"/>
-                <rect x="20" y="10" width="2" height="8" fill="white" rx="1"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="16" fill="#a855f7" opacity="0.95"/>
+                <circle cx="20" cy="20" r="15" fill="none" stroke="white" strokeWidth="1.5" opacity="0.6"/>
+                <circle cx="15" cy="15" r="2" fill="white"/>
+                <circle cx="25" cy="15" r="2" fill="white"/>
+                <path d="M 14 22 Q 20 24 26 22" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                <rect x="10" y="10" width="20" height="3" fill="white" rx="1.5" opacity="0.8"/>
+                <rect x="12" y="7" width="2" height="6" fill="white" rx="1" opacity="0.7"/>
+                <rect x="26" y="7" width="2" height="6" fill="white" rx="1" opacity="0.7"/>
               </svg>
             `),
-            scaledSize: new google.maps.Size(32, 32),
+            scaledSize: new google.maps.Size(40, 40),
           },
         });
       }
@@ -520,14 +532,25 @@ export default function Home() {
           title: crossing.name + " (Octopus Extension)",
           icon: {
             url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-                <circle cx="16" cy="16" r="14" fill="#f43f5e" opacity="0.9"/>
-                <rect x="10" y="12" width="12" height="2" fill="white"/>
-                <rect x="10" y="16" width="12" height="2" fill="white"/>
-                <circle cx="16" cy="16" r="2" fill="#fbbf24"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="16" fill="#f43f5e" opacity="0.95"/>
+                <circle cx="20" cy="20" r="15" fill="none" stroke="white" strokeWidth="1.5" opacity="0.6"/>
+                <circle cx="15" cy="15" r="2" fill="white"/>
+                <circle cx="25" cy="15" r="2" fill="white"/>
+                <path d="M 14 22 Q 20 24 26 22" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                <g opacity="0.8">
+                  <rect x="10" y="12" width="3" height="3" fill="white"/>
+                  <rect x="15" y="12" width="3" height="3" fill="white"/>
+                  <rect x="20" y="12" width="3" height="3" fill="white"/>
+                  <rect x="25" y="12" width="3" height="3" fill="white"/>
+                  <rect x="10" y="17" width="3" height="3" fill="white"/>
+                  <rect x="15" y="17" width="3" height="3" fill="white"/>
+                  <rect x="20" y="17" width="3" height="3" fill="white"/>
+                  <rect x="25" y="17" width="3" height="3" fill="white"/>
+                </g>
               </svg>
             `),
-            scaledSize: new google.maps.Size(32, 32),
+            scaledSize: new google.maps.Size(40, 40),
           },
         });
       }

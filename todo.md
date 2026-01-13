@@ -165,3 +165,14 @@
 - [x] Fix SVG text-anchor attribute to textAnchor
 - [x] Fix SVG font-weight attribute to fontWeight
 - [x] Fix SVG font-size attribute to fontSize
+
+## Cartoon Design Theme
+- [x] Update CSS with cartoon-style rounded corners (border-radius)
+- [x] Add playful shadows and depth effects
+- [x] Create cartoon-style lift marker with happy expression
+- [x] Create cartoon-style footbridge marker with playful design
+- [x] Create cartoon-style zebra crossing marker with stripes
+- [ ] Add cartoon character illustrations to the interface
+- [ ] Update button styles with cartoon aesthetic
+- [x] Add playful animations and micro-interactions
+- [ ] Update color palette with softer, warmer cartoon colors
