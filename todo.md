@@ -156,3 +156,7 @@
 - [x] Match legend lift icons to actual map marker SVG (up/down arrows)
 - [x] Match legend colors exactly to map markers
 - [x] Update footbridge, crossing, and location icons to match map
+
+## Left Side Legend Fix
+- [x] Update left side legend icons to match map markers exactly
+- [x] Replace emoji/text icons with SVG graphics matching the map

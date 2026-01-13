@@ -1503,33 +1503,44 @@ export default function Home() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-                  ↕
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                  <circle cx="16" cy="16" r="14" fill="#ec4899" opacity="0.9"/>
+                  <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                  <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+                </svg>
                 <span className="text-base">{t("accessibleLifts")}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white font-bold">
-                  ⚠
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0 animate-pulse">
+                  <circle cx="16" cy="16" r="14" fill="#ef4444" opacity="0.9"/>
+                  <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                  <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+                </svg>
                 <span className="text-base">{t("outOfServiceLifts")}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                  ═
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                  <circle cx="16" cy="16" r="14" fill="#a855f7" opacity="0.9"/>
+                  <rect x="8" y="14" width="16" height="4" fill="white" rx="1"/>
+                  <rect x="10" y="10" width="2" height="8" fill="white" rx="1"/>
+                  <rect x="20" y="10" width="2" height="8" fill="white" rx="1"/>
+                </svg>
                 <span className="text-base">{t("accessibleFootbridges")}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold">
-                  ⏱
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+                  <circle cx="16" cy="16" r="14" fill="#f43f5e" opacity="0.9"/>
+                  <rect x="10" y="12" width="12" height="2" fill="white"/>
+                  <rect x="10" y="16" width="12" height="2" fill="white"/>
+                  <circle cx="16" cy="16" r="2" fill="#fbbf24"/>
+                </svg>
                 <span className="text-base">{t("extendedCrossingTime")}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold">
-                  📍
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" className="shrink-0">
+                  <path d="M18 2c-5.5 0-10 4.5-10 10 0 7.5 10 20 10 20s10-12.5 10-20c0-5.5-4.5-10-10-10z" fill="#9333ea" opacity="0.9"/>
+                  <circle cx="18" cy="12" r="4" fill="white"/>
+                </svg>
                 <span className="text-base">{t("accessibleLocations")}</span>
               </div>
             </CardContent>
