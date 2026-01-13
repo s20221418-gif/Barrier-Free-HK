@@ -144,3 +144,10 @@
 - [x] Create CSS pulse animation keyframes for out-of-service markers
 - [x] Apply pulse animation to out-of-service lift markers on map
 - [x] Test pulse animation visibility and performance
+
+## Map Legend Panel
+- [x] Create collapsible legend panel component
+- [x] Display all marker types with icons and descriptions
+- [x] Explain pulse animation for out-of-service lifts
+- [x] Support bilingual labels (English/Chinese)
+- [x] Position legend in bottom-right corner of map

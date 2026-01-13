@@ -37,7 +37,10 @@ import {
   TreePine,
   Palette,
   PartyPopper,
-  MapPinned
+  MapPinned,
+  Info,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,6 +85,16 @@ const translations = {
     accessibleFootbridges: "Accessible Footbridges",
     extendedCrossingTime: "Extended Crossing Time",
     accessibleLocations: "Accessible Locations",
+    legend: "Legend",
+    showLegend: "Show Legend",
+    hideLegend: "Hide Legend",
+    liftDescription: "Working lifts for wheelchair access",
+    outOfServiceDescription: "Lifts currently under maintenance (pulsing)",
+    footbridgeDescription: "Footbridges with accessible facilities",
+    crossingDescription: "Zebra crossings with extended time for elderly",
+    locationDescription: "Verified accessible destinations",
+    originMarker: "Your starting point (draggable)",
+    destinationMarker: "Your destination (draggable)",
     addNote: "Add Accessibility Note",
     shareExperience: "Share your experience to help the community",
     location: "Location",
@@ -145,6 +158,16 @@ const translations = {
     accessibleFootbridges: "無障礙行人天橋",
     extendedCrossingTime: "延長過路時間",
     accessibleLocations: "無障礙地點",
+    legend: "圖例",
+    showLegend: "顯示圖例",
+    hideLegend: "隱藏圖例",
+    liftDescription: "輪椅可用的升降機",
+    outOfServiceDescription: "正在維修的升降機（閃爍）",
+    footbridgeDescription: "設有無障礙設施的行人天橋",
+    crossingDescription: "為長者延長過路時間的斑馬線",
+    locationDescription: "已驗證的無障礙地點",
+    originMarker: "您的起點（可拖曳）",
+    destinationMarker: "您的目的地（可拖曳）",
     addNote: "新增無障礙備註",
     shareExperience: "分享您的經驗以幫助社區",
     location: "位置",
@@ -243,6 +266,9 @@ export default function Home() {
   const [showNavigation, setShowNavigation] = useState(false);
   const [navigationSteps, setNavigationSteps] = useState<NavigationStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  
+  // Legend panel
+  const [showLegend, setShowLegend] = useState(true);
   
   // User notes
   const [showAddNote, setShowAddNote] = useState(false);
@@ -1518,6 +1544,118 @@ export default function Home() {
             initialZoom={13}
             className="w-full h-full min-h-[500px]"
           />
+          
+          {/* Collapsible Legend Panel */}
+          <div className={`absolute bottom-4 right-4 transition-all duration-300 ${showLegend ? 'w-72' : 'w-auto'}`}>
+            {showLegend ? (
+              <Card className="bg-white/95 backdrop-blur-sm border-2 border-pink-200 shadow-lg">
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-pink-500" />
+                    {t("legend")}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowLegend(false)}
+                    className="h-8 w-8 p-0"
+                    aria-label={t("hideLegend")}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  {/* Lift - Working */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">↕</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("accessibleLifts")}</p>
+                      <p className="text-xs text-muted-foreground">{t("liftDescription")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Lift - Out of Service */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center shrink-0 animate-pulse">
+                      <span className="text-white text-xs">↕</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("outOfServiceLifts")}</p>
+                      <p className="text-xs text-muted-foreground">{t("outOfServiceDescription")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Footbridge */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">🌉</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("accessibleFootbridges")}</p>
+                      <p className="text-xs text-muted-foreground">{t("footbridgeDescription")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Zebra Crossing */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-rose-400 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">🚶</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("extendedCrossingTime")}</p>
+                      <p className="text-xs text-muted-foreground">{t("crossingDescription")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Accessible Location */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">📍</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("accessibleLocations")}</p>
+                      <p className="text-xs text-muted-foreground">{t("locationDescription")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Origin Marker */}
+                  <div className="flex items-start gap-3 pt-2 border-t">
+                    <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">A</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("from")}</p>
+                      <p className="text-xs text-muted-foreground">{t("originMarker")}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Destination Marker */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center shrink-0">
+                      <span className="text-white text-xs">B</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{t("to")}</p>
+                      <p className="text-xs text-muted-foreground">{t("destinationMarker")}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Button
+                onClick={() => setShowLegend(true)}
+                className="bg-white/95 backdrop-blur-sm border-2 border-pink-200 shadow-lg hover:bg-pink-50"
+                variant="outline"
+                size="lg"
+                aria-label={t("showLegend")}
+              >
+                <Info className="w-5 h-5 text-pink-500 mr-2" />
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </main>
 
