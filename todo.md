@@ -139,3 +139,8 @@
 - [x] Apply pink/violet color scheme to buttons and UI elements
 - [x] Ensure warm, welcoming feel throughout the site
 - [x] Update map legend with new flat icon designs
+
+## Pulse Animation Enhancement
+- [x] Create CSS pulse animation keyframes for out-of-service markers
+- [x] Apply pulse animation to out-of-service lift markers on map
+- [x] Test pulse animation visibility and performance

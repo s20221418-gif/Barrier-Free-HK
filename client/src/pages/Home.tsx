@@ -426,8 +426,30 @@ export default function Home() {
           },
         });
 
-        // Show warning for out-of-service lifts
+        // Show warning for out-of-service lifts with pulse animation
         if (isOutOfService) {
+          // Create animated SVG with embedded pulse animation
+          const animatedSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+              <defs>
+                <style>
+                  @keyframes pulse { 0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.4)); } 50% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.6)); } }
+                  .pulse-circle { animation: pulse 2s ease-in-out infinite; }
+                </style>
+              </defs>
+              <g class="pulse-circle">
+                <circle cx="16" cy="16" r="14" fill="#ef4444" opacity="0.9"/>
+                <path d="M16 10l4 4h-3v4h-2v-4h-3z" fill="white"/>
+                <path d="M16 22l-4-4h3v-4h2v4h3z" fill="white"/>
+              </g>
+            </svg>
+          `;
+          
+          marker.setIcon({
+            url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(animatedSvg),
+            scaledSize: new google.maps.Size(32, 32),
+          });
+          
           marker.addListener("click", () => {
             toast.error(`⚠️ ${lift.location} is currently out of service`);
           });
