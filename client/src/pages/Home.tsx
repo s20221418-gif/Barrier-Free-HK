@@ -234,8 +234,36 @@ const ACCESSIBLE_LOCATIONS = [
   { name: "Hong Kong Park", nameCh: "香港公園", lat: 22.2773, lng: 114.1614, category: "park" },
 ];
 
+
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
+  
+  // Cute spinning character loader component
+  const CuteSpinner = () => (
+    <div className="flex flex-col items-center justify-center gap-3">
+      <svg 
+        className="w-16 h-16 animate-spin-slow" 
+        viewBox="0 0 100 100" 
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="50" cy="50" r="45" fill="#ec4899" opacity="0.9"/>
+        <circle cx="50" cy="50" r="44" fill="none" stroke="white" strokeWidth="2" opacity="0.5"/>
+        <circle cx="35" cy="40" r="5" fill="white"/>
+        <circle cx="65" cy="40" r="5" fill="white"/>
+        <path d="M 30 55 Q 50 65 70 55" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round"/>
+        <g className="origin-center">
+          <text x="50" y="15" fontSize="20" fill="#ec4899" textAnchor="middle" opacity="0.7">♥</text>
+        </g>
+        <g className="origin-center" style={{transform: 'rotate(120deg)'}}>
+          <text x="50" y="15" fontSize="20" fill="#ec4899" textAnchor="middle" opacity="0.7">♥</text>
+        </g>
+        <g className="origin-center" style={{transform: 'rotate(240deg)'}}>
+          <text x="50" y="15" fontSize="20" fill="#ec4899" textAnchor="middle" opacity="0.7">♥</text>
+        </g>
+      </svg>
+      <p className="text-pink-600 font-semibold text-lg animate-pulse">{t("calculating")}</p>
+    </div>
+  );
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsService, setDirectionsService] = useState<google.maps.DirectionsService | null>(null);
   const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
@@ -1405,10 +1433,7 @@ export default function Home() {
                   size="lg"
                 >
                   {isCalculating ? (
-                    <>
-                      <Loader2 className="w-6 h-6 mr-2 animate-spin" />
-                      {t("calculating")}
-                    </>
+                    <CuteSpinner />
                   ) : (
                     <>
                       <Search className="w-6 h-6 mr-2" />

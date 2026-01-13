@@ -176,3 +176,11 @@
 - [ ] Update button styles with cartoon aesthetic
 - [x] Add playful animations and micro-interactions
 - [ ] Update color palette with softer, warmer cartoon colors
+
+## Loading Spinner Feature
+- [x] Create cute spinning character SVG (smiling face with rotating elements)
+- [x] Add spinning animation keyframes to CSS
+- [x] Integrate loading spinner into route calculation UI
+- [x] Show spinner while calculating accessible routes
+- [x] Add loading text with spinner (e.g., "Finding accessible route...")
+- [x] Hide spinner when route calculation completes

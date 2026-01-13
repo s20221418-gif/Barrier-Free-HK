@@ -302,3 +302,19 @@ input:focus, textarea:focus, select:focus {
 .icon-float {
   animation: float 3s ease-in-out infinite;
 }
+
+/* Cute spinner animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+}
