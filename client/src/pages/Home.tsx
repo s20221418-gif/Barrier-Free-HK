@@ -591,7 +591,7 @@ export default function Home() {
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
             <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#10b981" opacity="0.9"/>
             <circle cx="20" cy="13" r="5" fill="white"/>
-            <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#10b981">A</text>
+            <text x="20" y="18" fontSize="14" fontWeight="bold" textAnchor="middle" fill="#10b981">A</text>
           </svg>
         `),
         scaledSize: new google.maps.Size(40, 40),
@@ -630,7 +630,7 @@ export default function Home() {
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
             <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#f43f5e" opacity="0.9"/>
             <circle cx="20" cy="13" r="5" fill="white"/>
-            <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#f43f5e">B</text>
+            <text x="20" y="18" fontSize="14" fontWeight="bold" textAnchor="middle" fill="#f43f5e">B</text>
           </svg>
         `),
         scaledSize: new google.maps.Size(40, 40),
@@ -1647,7 +1647,7 @@ export default function Home() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" className="shrink-0">
                       <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#10b981" opacity="0.9"/>
                       <circle cx="20" cy="13" r="5" fill="white"/>
-                      <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#10b981">A</text>
+                      <text x="20" y="18" fontSize="14" fontWeight="bold" textAnchor="middle" fill="#10b981">A</text>
                     </svg>
                     <div>
                       <p className="font-medium text-sm">{t("from")}</p>
@@ -1660,7 +1660,7 @@ export default function Home() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" className="shrink-0">
                       <path d="M20 2c-6 0-11 5-11 11 0 8 11 23 11 23s11-15 11-23c0-6-5-11-11-11z" fill="#f43f5e" opacity="0.9"/>
                       <circle cx="20" cy="13" r="5" fill="white"/>
-                      <text x="20" y="18" font-size="14" font-weight="bold" text-anchor="middle" fill="#f43f5e">B</text>
+                      <text x="20" y="18" fontSize="14" fontWeight="bold" textAnchor="middle" fill="#f43f5e">B</text>
                     </svg>
                     <div>
                       <p className="font-medium text-sm">{t("to")}</p>

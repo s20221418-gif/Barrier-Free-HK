@@ -160,3 +160,8 @@
 ## Left Side Legend Fix
 - [x] Update left side legend icons to match map markers exactly
 - [x] Replace emoji/text icons with SVG graphics matching the map
+
+## Bug Fixes
+- [x] Fix SVG text-anchor attribute to textAnchor
+- [x] Fix SVG font-weight attribute to fontWeight
+- [x] Fix SVG font-size attribute to fontSize
